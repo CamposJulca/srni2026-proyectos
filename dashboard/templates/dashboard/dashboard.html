@@ -1,0 +1,196 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<div class="titulo-institucional">
+
+<h1>Dashboard de Proyectos</h1>
+
+<h2>
+Procedimiento de Instrumentalización<br>
+Subdirección de la Red Nacional de Información<br>
+Unidad para las Víctimas
+</h2>
+
+</div>
+
+<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Dashboard Proyectos</h1>
+
+
+<!-- FILTROS -->
+
+<div class="filtros">
+
+<select id="personaFiltro">
+
+<option value="">Todas las personas</option>
+
+{% for p in personas %}
+
+<option value="{{p.id}}">{{p.nombre}}</option>
+
+{% endfor %}
+
+</select>
+
+
+<select id="rolFiltro">
+
+<option value="">Todos los roles</option>
+
+{% for r in roles %}
+
+<option value="{{r.id}}">{{r.nombre}}</option>
+
+{% endfor %}
+
+</select>
+
+
+<select id="proyectoFiltro">
+
+<option value="">Todos los proyectos</option>
+
+{% for p in proyectos %}
+
+<option value="{{p.id}}">{{p.nombre}}</option>
+
+{% endfor %}
+
+</select>
+
+</div>
+
+
+
+<!-- KPIs -->
+
+<div class="kpi-container">
+
+<div class="kpi-card">
+<h3>Proyectos</h3>
+<h2 id="kpiProyectos">0</h2>
+</div>
+
+<div class="kpi-card">
+<h3>Módulos</h3>
+<h2 id="kpiModulos">0</h2>
+</div>
+
+<div class="kpi-card">
+<h3>Personas</h3>
+<h2 id="kpiPersonas">0</h2>
+</div>
+
+<div class="kpi-card">
+<h3>Asignaciones</h3>
+<h2 id="kpiAsignaciones">0</h2>
+</div>
+
+</div>
+
+
+
+<!-- GRAFICOS PRINCIPALES -->
+
+<div class="graficos">
+
+<div class="grafico-card">
+
+<h3>Proyectos por persona</h3>
+
+<div class="grafico-scroll">
+
+<canvas id="graficoPersonas"></canvas>
+
+</div>
+
+</div>
+
+
+<div class="grafico-card">
+
+<h3>Roles</h3>
+
+<canvas id="graficoRoles"></canvas>
+
+</div>
+
+</div>
+
+
+
+<!-- GRAFICOS SECUNDARIOS -->
+
+<div class="graficos">
+
+<div class="grafico-card">
+
+<h3>Módulos por proyecto</h3>
+
+<canvas id="graficoModulos"></canvas>
+
+</div>
+
+
+<div class="grafico-card">
+
+<h3>Compromisos por mes</h3>
+
+<canvas id="graficoMes"></canvas>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- MODAL PERSONA -->
+
+<div id="modalPersona" class="modal">
+
+<div class="modal-content">
+
+<span class="close">&times;</span>
+
+<h2 id="modalNombre"></h2>
+
+<p id="modalTexto">
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+nisi ut aliquip ex ea commodo consequat.
+
+</p>
+
+</div>
+
+</div>
+
+
+
+<!-- JAVASCRIPT -->
+
+<script src="{% static 'dashboard/js/dashboard.js' %}"></script>
+
+</body>
+
+</html>

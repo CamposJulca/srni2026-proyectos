@@ -51,13 +51,20 @@ def dashboard_data(request):
     if proyecto:
         asignaciones = asignaciones.filter(modulo__proyecto_id=proyecto)
 
-    kpis = {
+    # ==============================
+    # KPIs
+    # ==============================
 
+    kpis = {
         "proyectos": Proyecto.objects.count(),
         "modulos": Modulo.objects.count(),
         "personas": Persona.objects.count(),
         "asignaciones": asignaciones.count(),
     }
+
+    # ==============================
+    # Proyectos por persona
+    # ==============================
 
     proyectos_persona = (
         asignaciones
@@ -65,34 +72,49 @@ def dashboard_data(request):
         .annotate(total=Count("modulo__proyecto", distinct=True))
     )
 
+    # ==============================
+    # Roles por persona
+    # ==============================
+
     roles_persona = (
         asignaciones
         .values("rol__nombre")
         .annotate(total=Count("persona", distinct=True))
     )
 
+    # ==============================
+    # Módulos filtrados
+    # ==============================
+
+    modulos_ids = asignaciones.values_list("modulo_id", flat=True)
+
     modulos_proyecto = (
         Modulo.objects
+        .filter(id__in=modulos_ids)
         .values("proyecto__nombre")
-        .annotate(total=Count("id"))
+        .annotate(total=Count("id", distinct=True))
     )
 
+    # ==============================
+    # Compromisos por mes
+    # ==============================
+
+    compromisos_query = PlanAccion.objects.select_related("modulo", "modulo__proyecto")
+
+    if proyecto:
+        compromisos_query = compromisos_query.filter(modulo__proyecto_id=proyecto)
+
     compromisos_mes = (
-        PlanAccion.objects
+        compromisos_query
         .values("mes")
         .annotate(total=Count("id"))
     )
 
     data = {
-
         "kpis": kpis,
-
         "proyectos_persona": list(proyectos_persona),
-
         "roles_persona": list(roles_persona),
-
         "modulos_proyecto": list(modulos_proyecto),
-
         "compromisos_mes": list(compromisos_mes),
     }
 

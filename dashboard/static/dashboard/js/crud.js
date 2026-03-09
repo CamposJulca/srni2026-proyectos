@@ -1,76 +1,48 @@
 /* =====================================================
-   CRUD MODULE
+   CRUD MODULE — Vista Excel de Contratistas
 ===================================================== */
 
-let META       = {}          // metadatos de todas las tablas
-let tablaActiva = "persona"  // tabla seleccionada
-let paginaActual = 1
-let totalRegistros = 0
-let modoEdicion  = false     // false=crear, true=editar
-let idEdicion    = null
-let idBorrar     = null
-let searchTimer  = null
+const PROCEDIMIENTOS = [
+  "INSTRUMENTALIZACIÓN",
+  "EQUIPO BASE",
+  "ANÁLISIS",
+  "CARACTERIZACIÓN",
+  "DIFUSIÓN Y APRENDIZAJE",
+  "AIDI",
+  "MESA DE SERVICIOS",
+  "GIS",
+]
 
+const CAMPOS_PERSONA = [
+  { name: "nombre",        label: "Nombre completo", type: "text",     required: true },
+  { name: "cedula",        label: "Cédula",          type: "text" },
+  { name: "procedimiento", label: "Procedimiento",   type: "select" },
+  { name: "fecha_inicio",  label: "Fecha inicio",    type: "date" },
+  { name: "fecha_fin",     label: "Fecha fin",       type: "date" },
+  { name: "honorarios",    label: "Honorarios/mes",  type: "number" },
+  { name: "objeto",        label: "Objeto contrato", type: "textarea" },
+  { name: "obligaciones",  label: "Obligaciones",    type: "textarea" },
+]
+
+let paginaActual  = 1
+let modoEdicion   = false
+let idEdicion     = null
+let idBorrar      = null
+let searchTimer   = null
+
+const $  = id => document.getElementById(id)
 const CSRF = () => {
   const v = document.cookie.split(";").find(c => c.trim().startsWith("csrftoken="))
   return v ? decodeURIComponent(v.trim().split("=")[1]) : ""
 }
-
-const $ = id => document.getElementById(id)
 
 
 /* =====================================================
    INICIALIZACIÓN al activar la pestaña CRUD
 ===================================================== */
 document.querySelector('[data-tab="crud"]').addEventListener("click", () => {
-  if (Object.keys(META).length === 0) iniciarCRUD()
-})
-
-async function iniciarCRUD() {
-  const res  = await fetch("/api/crud/meta/")
-  META       = await res.json()
-  renderSidebar()
-  activarTabla("persona")
-}
-
-
-/* =====================================================
-   SIDEBAR
-===================================================== */
-function renderSidebar() {
-  const iconos = {
-    persona:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>`,
-    modulo:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
-    rol:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>`,
-    asignacion:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>`,
-    planaccion:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
-  }
-
-  $("crudTablasBtns").innerHTML = Object.entries(META).map(([key, cfg]) => `
-    <button class="crud-tabla-btn${key === tablaActiva ? " active" : ""}" data-tabla="${key}">
-      <span class="crud-tabla-icono">${iconos[key] || ""}</span>
-      <span class="crud-tabla-info">
-        <span class="crud-tabla-nombre">${cfg.label}</span>
-        <span class="crud-tabla-count">${cfg.total}</span>
-      </span>
-    </button>
-  `).join("")
-
-  document.querySelectorAll(".crud-tabla-btn").forEach(btn => {
-    btn.addEventListener("click", () => activarTabla(btn.dataset.tabla))
-  })
-}
-
-function activarTabla(tabla) {
-  tablaActiva  = tabla
-  paginaActual = 1
-  $("crudSearch").value = ""
-  document.querySelectorAll(".crud-tabla-btn").forEach(b => {
-    b.classList.toggle("active", b.dataset.tabla === tabla)
-  })
-  $("crudTablaTitulo").textContent = META[tabla]?.label || tabla
   cargarLista()
-}
+})
 
 
 /* =====================================================
@@ -78,29 +50,20 @@ function activarTabla(tabla) {
 ===================================================== */
 async function cargarLista() {
   const q    = $("crudSearch").value.trim()
-  const url  = `/api/crud/${tablaActiva}/?page=${paginaActual}${q ? "&q=" + encodeURIComponent(q) : ""}`
+  const proc = $("xlsFiltroProc").value
+  let url = `/api/crud/persona/?page=${paginaActual}`
+  if (q)    url += `&q=${encodeURIComponent(q)}`
+  if (proc) url += `&proc=${encodeURIComponent(proc)}`
+
   const res  = await fetch(url)
   const data = await res.json()
 
-  totalRegistros = data.total
-  renderCabecera()
-  renderFilas(data.filas)
+  $("xlsConteo").textContent = `${data.total} contratista${data.total !== 1 ? "s" : ""}`
+  renderFilas(data.filas, data.total)
   renderPaginacion(data.total, data.page, data.size)
 }
 
-function renderCabecera() {
-  const cols = META[tablaActiva]?.columnas || []
-  const labels = cols.map(c => {
-    const partes = c.split("__")
-    return partes.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" › ")
-  })
-  $("crudThead").innerHTML = `<tr>
-    ${labels.map(l => `<th>${l}</th>`).join("")}
-    <th class="th-acciones">Acciones</th>
-  </tr>`
-}
-
-function renderFilas(filas) {
+function renderFilas(filas, total) {
   const $vacio = $("crudVacio")
   const $tbody = $("crudTbody")
 
@@ -111,14 +74,23 @@ function renderFilas(filas) {
   }
   $vacio.classList.add("oculto")
 
-  const cols = META[tablaActiva]?.columnas || []
-  $tbody.innerHTML = filas.map(fila => `
+  const offset = (paginaActual - 1) * 25
+  $tbody.innerHTML = filas.map((fila, i) => {
+    const honorarios = fila.honorarios
+      ? `$ ${parseFloat(fila.honorarios).toLocaleString("es-CO")}`
+      : "—"
+    const proc = fila.procedimiento || "—"
+    const procClass = "proc-badge proc-" + (fila.procedimiento || "").toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
+    return `
     <tr>
-      ${cols.map(c => {
-        const val = fila[c]
-        const corto = val && val.length > 60 ? val.slice(0, 60) + "…" : (val ?? "—")
-        return `<td title="${(val || "").replace(/"/g, "&quot;")}">${corto}</td>`
-      }).join("")}
+      <td class="xls-td-num">${offset + i + 1}</td>
+      <td class="xls-td-nombre" title="${(fila.nombre || "").replace(/"/g, "&quot;")}">${fila.nombre || "—"}</td>
+      <td>${fila.cedula || "—"}</td>
+      <td><span class="${procClass}">${proc}</span></td>
+      <td>${fila.fecha_inicio || "—"}</td>
+      <td>${fila.fecha_fin || "—"}</td>
+      <td class="xls-td-honorarios">${honorarios}</td>
       <td class="td-acciones">
         <button class="btn-accion btn-editar" data-id="${fila.id}" title="Editar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -126,17 +98,16 @@ function renderFilas(filas) {
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
           </svg>
         </button>
-        <button class="btn-accion btn-borrar" data-id="${fila.id}" data-desc="${(fila[cols[0]] || fila.id).replace(/"/g, "&quot;")}" title="Eliminar">
+        <button class="btn-accion btn-borrar" data-id="${fila.id}" data-desc="${(fila.nombre || fila.id).replace(/"/g, "&quot;")}" title="Eliminar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
             <path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
           </svg>
         </button>
       </td>
-    </tr>
-  `).join("")
+    </tr>`
+  }).join("")
 
-  // Eventos
   document.querySelectorAll(".btn-editar").forEach(b =>
     b.addEventListener("click", () => abrirEditar(parseInt(b.dataset.id))))
   document.querySelectorAll(".btn-borrar").forEach(b =>
@@ -146,10 +117,9 @@ function renderFilas(filas) {
 function renderPaginacion(total, page, size) {
   const totalPags = Math.ceil(total / size)
   const $pag = $("crudPaginacion")
-  if (totalPags <= 1) { $pag.innerHTML = `<span class="pag-info">${total} registro${total !== 1 ? "s" : ""}</span>`; return }
+  if (totalPags <= 1) { $pag.innerHTML = ""; return }
 
-  let html = `<span class="pag-info">${total} registros</span>`
-  html += `<button class="pag-btn" ${page <= 1 ? "disabled" : ""} data-p="${page-1}">&#8592;</button>`
+  let html = `<button class="pag-btn" ${page <= 1 ? "disabled" : ""} data-p="${page-1}">&#8592;</button>`
   for (let p = Math.max(1, page-2); p <= Math.min(totalPags, page+2); p++) {
     html += `<button class="pag-btn${p===page?" pag-activo":""}" data-p="${p}">${p}</button>`
   }
@@ -162,11 +132,16 @@ function renderPaginacion(total, page, size) {
 
 
 /* =====================================================
-   BÚSQUEDA
+   BÚSQUEDA Y FILTROS
 ===================================================== */
 $("crudSearch").addEventListener("input", () => {
   clearTimeout(searchTimer)
   searchTimer = setTimeout(() => { paginaActual = 1; cargarLista() }, 350)
+})
+
+$("xlsFiltroProc").addEventListener("change", () => {
+  paginaActual = 1
+  cargarLista()
 })
 
 
@@ -183,7 +158,7 @@ function abrirCrear() {
   idEdicion   = null
   $("crudModalAvatar").textContent = "+"
   $("crudModalAvatar").style.background = "linear-gradient(135deg,#10b981,#00875a)"
-  $("crudModalTitulo").textContent = `Nuevo — ${META[tablaActiva]?.label}`
+  $("crudModalTitulo").textContent = "Nuevo contratista"
   renderForm({})
   $("crudModal").style.display = "flex"
 }
@@ -191,11 +166,11 @@ function abrirCrear() {
 async function abrirEditar(id) {
   modoEdicion = true
   idEdicion   = id
-  const res   = await fetch(`/api/crud/${tablaActiva}/${id}/`)
+  const res   = await fetch(`/api/crud/persona/${id}/`)
   const datos = await res.json()
   $("crudModalAvatar").textContent = "✏"
   $("crudModalAvatar").style.background = "linear-gradient(135deg,#2563eb,#003087)"
-  $("crudModalTitulo").textContent = `Editar — ${META[tablaActiva]?.label}`
+  $("crudModalTitulo").textContent = "Editar contratista"
   renderForm(datos)
   $("crudModal").style.display = "flex"
 }
@@ -205,10 +180,9 @@ function cerrarModal() {
 }
 
 function renderForm(datos) {
-  const campos = META[tablaActiva]?.campos || []
-  $("crudForm").innerHTML = campos.map(c => {
+  $("crudForm").innerHTML = CAMPOS_PERSONA.map(c => {
     const val = datos[c.name] ?? ""
-    const req  = c.required ? "required" : ""
+    const req = c.required ? "required" : ""
 
     if (c.type === "textarea") {
       return `<div class="form-grupo">
@@ -218,8 +192,8 @@ function renderForm(datos) {
     }
 
     if (c.type === "select") {
-      const opts = c.opciones_fijas || []
-      const options = opts.map(o => `<option value="${o}" ${o===val?"selected":""}>${o}</option>`).join("")
+      const options = PROCEDIMIENTOS.map(o =>
+        `<option value="${o}" ${o===val?"selected":""}>${o}</option>`).join("")
       return `<div class="form-grupo">
         <label>${c.label}${c.required ? " <span class='req'>*</span>" : ""}</label>
         <select name="${c.name}" ${req}>
@@ -229,19 +203,6 @@ function renderForm(datos) {
       </div>`
     }
 
-    if (c.type === "fk") {
-      const opts = c.opciones || []
-      const options = opts.map(o => `<option value="${o.id}" ${o.id==val?"selected":""}>${o.label}</option>`).join("")
-      return `<div class="form-grupo">
-        <label>${c.label}${c.required ? " <span class='req'>*</span>" : ""}</label>
-        <select name="${c.name}" ${req}>
-          <option value="">— Selecciona —</option>
-          ${options}
-        </select>
-      </div>`
-    }
-
-    // text / number / date
     return `<div class="form-grupo">
       <label>${c.label}${c.required ? " <span class='req'>*</span>" : ""}</label>
       <input type="${c.type}" name="${c.name}" value="${val}" ${req}>
@@ -250,11 +211,10 @@ function renderForm(datos) {
 }
 
 $("btnGuardar").addEventListener("click", async () => {
-  const campos = META[tablaActiva]?.campos || []
-  const body   = {}
-  let valido   = true
+  const body  = {}
+  let valido  = true
 
-  campos.forEach(c => {
+  CAMPOS_PERSONA.forEach(c => {
     const el  = $("crudForm").elements[c.name]
     const val = el ? el.value.trim() : ""
     if (c.required && !val) {
@@ -266,9 +226,9 @@ $("btnGuardar").addEventListener("click", async () => {
     }
   })
 
-  if (!valido) { toast("Completa los campos obligatorios", "error"); return }
+  if (!valido) { crudToast("Completa los campos obligatorios", "error"); return }
 
-  const url    = modoEdicion ? `/api/crud/${tablaActiva}/${idEdicion}/` : `/api/crud/${tablaActiva}/crear/`
+  const url    = modoEdicion ? `/api/crud/persona/${idEdicion}/` : `/api/crud/persona/crear/`
   const method = modoEdicion ? "PUT" : "POST"
 
   const res  = await fetch(url, {
@@ -278,12 +238,12 @@ $("btnGuardar").addEventListener("click", async () => {
   })
   const data = await res.json()
 
-  if (data.error) { toast(data.error, "error"); return }
+  if (data.error) { crudToast(data.error, "error"); return }
 
   cerrarModal()
-  await iniciarCRUD()       // refresca conteos en sidebar
-  activarTabla(tablaActiva) // recarga lista
-  toast(modoEdicion ? "Registro actualizado" : "Registro creado", "ok")
+  paginaActual = 1
+  cargarLista()
+  crudToast(modoEdicion ? "Registro actualizado" : "Registro creado", "ok")
 })
 
 
@@ -291,7 +251,9 @@ $("btnGuardar").addEventListener("click", async () => {
    CONFIRMAR BORRADO
 ===================================================== */
 $("btnBorrarCancelar").addEventListener("click", () => $("crudModalBorrar").style.display = "none")
-$("crudModalBorrar").addEventListener("click", e => { if (e.target === $("crudModalBorrar")) $("crudModalBorrar").style.display = "none" })
+$("crudModalBorrar").addEventListener("click", e => {
+  if (e.target === $("crudModalBorrar")) $("crudModalBorrar").style.display = "none"
+})
 
 function confirmarBorrar(id, desc) {
   idBorrar = id
@@ -301,15 +263,15 @@ function confirmarBorrar(id, desc) {
 
 $("btnBorrarConfirmar").addEventListener("click", async () => {
   $("crudModalBorrar").style.display = "none"
-  const res  = await fetch(`/api/crud/${tablaActiva}/${idBorrar}/`, {
+  const res  = await fetch(`/api/crud/persona/${idBorrar}/`, {
     method: "DELETE",
     headers: { "X-CSRFToken": CSRF() }
   })
   const data = await res.json()
-  if (data.error) { toast(data.error, "error"); return }
-  await iniciarCRUD()
-  activarTabla(tablaActiva)
-  toast("Registro eliminado", "ok")
+  if (data.error) { crudToast(data.error, "error"); return }
+  paginaActual = 1
+  cargarLista()
+  crudToast("Registro eliminado", "ok")
 })
 
 
@@ -317,7 +279,7 @@ $("btnBorrarConfirmar").addEventListener("click", async () => {
    TOAST
 ===================================================== */
 let toastTimer = null
-function toast(msg, tipo = "ok") {
+function crudToast(msg, tipo = "ok") {
   const el = $("crudToast")
   el.textContent = msg
   el.className = `crud-toast crud-toast-${tipo}`

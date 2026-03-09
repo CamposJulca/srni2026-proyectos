@@ -324,6 +324,11 @@ def crud_lista(request, tabla):
 
     qs = cfg["modelo"].objects.all()
 
+    # Filtro por procedimiento (solo tabla persona)
+    proc = request.GET.get("proc", "").strip()
+    if proc and tabla == "persona":
+        qs = qs.filter(procedimiento=proc)
+
     # Búsqueda
     q = request.GET.get("q", "").strip()
     if q and cfg["buscar_en"]:

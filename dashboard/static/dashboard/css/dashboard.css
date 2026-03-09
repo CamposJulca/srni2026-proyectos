@@ -1499,3 +1499,193 @@ canvas { max-width: 100%; }
   .crud-sidebar { position: static; }
   .crud-form { grid-template-columns: 1fr; }
 }
+
+/* =====================================================
+   CRUD EXCEL-STYLE (tab Gestión CRUD)
+===================================================== */
+.xls-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--blanco);
+  border-bottom: 2px solid var(--borde);
+  flex-wrap: wrap;
+}
+.xls-toolbar-brand,
+.xls-toolbar-izq {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: auto;
+}
+.xls-toolbar-der {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.xls-toolbar-brand svg,
+.xls-toolbar-izq svg {
+  width: 28px; height: 28px;
+  stroke: var(--azul);
+  flex-shrink: 0;
+}
+.xls-toolbar-brand h2,
+.xls-titulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--azul);
+  margin: 0;
+}
+.crud-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.crud-search-wrap svg {
+  position: absolute;
+  left: 10px;
+  width: 15px; height: 15px;
+  stroke: var(--texto-s);
+  pointer-events: none;
+}
+.xls-conteo {
+  font-size: 0.8rem;
+  color: var(--texto-s);
+  font-weight: 600;
+  background: var(--fondo);
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-left: 6px;
+}
+.xls-search {
+  padding: 8px 14px 8px 32px;
+  border: 1.5px solid var(--borde);
+  border-radius: 8px;
+  font-family: var(--fuente);
+  font-size: 0.86rem;
+  width: 220px;
+  transition: var(--trans);
+  background: var(--fondo);
+}
+.xls-search:focus {
+  outline: none;
+  border-color: var(--azul);
+  background: var(--blanco);
+  box-shadow: 0 0 0 3px rgba(0,48,135,0.08);
+}
+.xls-select-proc {
+  padding: 8px 12px;
+  border: 1.5px solid var(--borde);
+  border-radius: 8px;
+  font-family: var(--fuente);
+  font-size: 0.84rem;
+  background: var(--fondo);
+  cursor: pointer;
+  transition: var(--trans);
+}
+.xls-select-proc:focus {
+  outline: none;
+  border-color: var(--azul);
+}
+
+.xls-wrap {
+  overflow-x: auto;
+  flex: 1;
+}
+
+.xls-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.xls-tabla thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.xls-tabla th {
+  background: var(--azul);
+  color: var(--blanco);
+  padding: 11px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  user-select: none;
+}
+.xls-tabla th.xls-th-num  { width: 46px; text-align: center; }
+.xls-tabla th.xls-th-acc  { width: 90px; text-align: center; }
+
+.xls-tabla tbody tr {
+  border-bottom: 1px solid var(--borde);
+  transition: background 0.15s;
+}
+.xls-tabla tbody tr:hover { background: rgba(0,48,135,0.04); }
+.xls-tabla tbody tr:nth-child(even) { background: rgba(0,0,0,0.018); }
+.xls-tabla tbody tr:nth-child(even):hover { background: rgba(0,48,135,0.05); }
+
+.xls-tabla td {
+  padding: 9px 14px;
+  color: var(--texto);
+  vertical-align: middle;
+}
+.xls-td-num {
+  text-align: center;
+  color: var(--texto-s);
+  font-size: 0.78rem;
+}
+.xls-td-nombre {
+  font-weight: 600;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.xls-td-honorarios {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-weight: 600;
+  color: var(--azul);
+}
+
+/* Badges de procedimiento */
+.proc-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #e2e8f0;
+  color: #475569;
+}
+.proc-badge.proc-instrumentalizacion    { background: #dbeafe; color: #1d4ed8; }
+.proc-badge.proc-equipo-base            { background: #d1fae5; color: #065f46; }
+.proc-badge.proc-analisis               { background: #fef3c7; color: #92400e; }
+.proc-badge.proc-caracterizacion        { background: #ede9fe; color: #5b21b6; }
+.proc-badge.proc-difusion-y-aprendizaje { background: #fce7f3; color: #9d174d; }
+.proc-badge.proc-aidi                   { background: #ffedd5; color: #9a3412; }
+.proc-badge.proc-mesa-de-servicios      { background: #f0fdf4; color: #166534; }
+.proc-badge.proc-gis                    { background: #cffafe; color: #0e7490; }
+
+.xls-vacio {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--texto-s);
+}
+.xls-vacio svg {
+  width: 48px; height: 48px;
+  stroke: var(--borde);
+  margin-bottom: 12px;
+}
+.xls-vacio p { font-size: 0.9rem; margin: 4px 0; }
+.xls-vacio p:first-of-type { font-weight: 700; color: var(--texto); }
+
+@media (max-width: 768px) {
+  .xls-toolbar { gap: 8px; }
+  .xls-search  { width: 140px; }
+  .xls-tabla td, .xls-tabla th { padding: 8px 10px; }
+}

@@ -33,6 +33,7 @@ class Persona(models.Model):
 
     nombre = models.CharField(max_length=200, unique=True)
     cedula = models.CharField(max_length=20, null=True, blank=True)
+    procedimiento = models.CharField(max_length=100, null=True, blank=True)
     fecha_inicio = models.DateField(null=True, blank=True)
     fecha_fin = models.DateField(null=True, blank=True)
     honorarios = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)

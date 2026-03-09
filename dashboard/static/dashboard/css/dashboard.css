@@ -1065,3 +1065,10 @@ canvas { max-width: 100%; }
   background: var(--verde);
   color: var(--blanco);
 }
+
+.col-tag.col-new {
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #15803d;
+  font-weight: 700;
+}

@@ -17,9 +17,9 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 ===================================================== */
 const QUERIES_TABLA = {
   dashboard_persona:
-`SELECT id, nombre, cedula, fecha_inicio, fecha_fin, honorarios
+`SELECT id, nombre, cedula, procedimiento, fecha_inicio, fecha_fin, honorarios
 FROM dashboard_persona
-ORDER BY nombre
+ORDER BY procedimiento, nombre
 LIMIT 20;`,
   dashboard_proyecto:
 `SELECT *

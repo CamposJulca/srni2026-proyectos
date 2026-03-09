@@ -278,6 +278,7 @@
             <span class="col-tag col-pk">id</span>
             <span class="col-tag">nombre</span>
             <span class="col-tag">cedula</span>
+            <span class="col-tag col-new">procedimiento</span>
             <span class="col-tag">fecha_inicio</span>
             <span class="col-tag">fecha_fin</span>
             <span class="col-tag">honorarios</span>
@@ -402,6 +403,20 @@ FROM dashboard_persona p
 WHERE p.cedula IS NULL
 ORDER BY p.nombre;">
             Sin datos del Excel
+          </button>
+          <button class="sugerida-btn" data-query="SELECT procedimiento, COUNT(*) AS personas,
+  SUM(honorarios) AS masa_salarial
+FROM dashboard_persona
+WHERE procedimiento IS NOT NULL
+GROUP BY procedimiento
+ORDER BY personas DESC;">
+            Personas por procedimiento
+          </button>
+          <button class="sugerida-btn" data-query="SELECT nombre, cedula, honorarios, fecha_inicio, fecha_fin
+FROM dashboard_persona
+WHERE procedimiento = 'INSTRUMENTALIZACIÓN'
+ORDER BY nombre;">
+            Equipo Instrumentalización
           </button>
         </div>
       </aside>

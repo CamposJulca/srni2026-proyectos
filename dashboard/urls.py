@@ -11,4 +11,10 @@ urlpatterns = [
         name="dashboard_data"
     ),
 
+    path(
+        "api/sql/",
+        views.sql_query,
+        name="sql_query"
+    ),
+
 ]

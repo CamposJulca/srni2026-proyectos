@@ -1,6 +1,10 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.db.models import Count
+from django.db import connection
+from django.views.decorators.http import require_POST
+import json
+import re
 
 from .models import (
     Proyecto,
@@ -119,3 +123,44 @@ def dashboard_data(request):
     }
 
     return JsonResponse(data)
+
+
+@require_POST
+def sql_query(request):
+    try:
+        body = json.loads(request.body)
+        query = body.get("query", "").strip()
+    except Exception:
+        return JsonResponse({"error": "JSON inválido."}, status=400)
+
+    if not query:
+        return JsonResponse({"error": "La consulta está vacía."}, status=400)
+
+    # Solo permite SELECT
+    primera_palabra = re.split(r'\s+', query)[0].upper()
+    if primera_palabra != "SELECT":
+        return JsonResponse(
+            {"error": "Solo se permiten consultas SELECT."},
+            status=403
+        )
+
+    # Bloquea palabras peligrosas por si cuelan en subconsultas
+    peligrosas = r'\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|ATTACH|DETACH|PRAGMA)\b'
+    if re.search(peligrosas, query, re.IGNORECASE):
+        return JsonResponse(
+            {"error": "La consulta contiene operaciones no permitidas."},
+            status=403
+        )
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+            columnas = [desc[0] for desc in cursor.description]
+            filas = cursor.fetchmany(500)  # máximo 500 filas
+        return JsonResponse({
+            "columnas": columnas,
+            "filas": [list(f) for f in filas],
+            "total": len(filas)
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)

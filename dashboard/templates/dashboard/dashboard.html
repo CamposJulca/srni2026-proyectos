@@ -277,6 +277,12 @@
           <div class="tabla-cols">
             <span class="col-tag col-pk">id</span>
             <span class="col-tag">nombre</span>
+            <span class="col-tag">cedula</span>
+            <span class="col-tag">fecha_inicio</span>
+            <span class="col-tag">fecha_fin</span>
+            <span class="col-tag">honorarios</span>
+            <span class="col-tag">objeto</span>
+            <span class="col-tag">obligaciones</span>
           </div>
         </div>
 
@@ -327,6 +333,77 @@
           <span class="col-tag col-pk">PK</span> Primary key &nbsp;
           <span class="col-tag col-fk">FK</span> Foreign key
         </div>
+
+        <!-- CONSULTAS SUGERIDAS -->
+        <div class="sidebar-titulo" style="margin-top:20px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Consultas sugeridas
+        </div>
+
+        <div class="sugeridas">
+          <button class="sugerida-btn" data-query="SELECT nombre, cedula, fecha_inicio, fecha_fin, honorarios
+FROM dashboard_persona
+WHERE cedula IS NOT NULL
+ORDER BY nombre;">
+            Contratistas con datos completos
+          </button>
+          <button class="sugerida-btn" data-query="SELECT nombre, honorarios
+FROM dashboard_persona
+WHERE honorarios IS NOT NULL
+ORDER BY honorarios DESC
+LIMIT 20;">
+            Top 20 por honorarios
+          </button>
+          <button class="sugerida-btn" data-query="SELECT p.nombre, p.cedula, p.honorarios, p.fecha_inicio, p.fecha_fin
+FROM dashboard_persona p
+INNER JOIN dashboard_asignacion a ON a.persona_id = p.id
+GROUP BY p.id
+ORDER BY p.nombre;">
+            Contratistas con asignación
+          </button>
+          <button class="sugerida-btn" data-query="SELECT p.nombre, r.nombre AS rol, pr.nombre AS proyecto
+FROM dashboard_asignacion a
+JOIN dashboard_persona p  ON p.id = a.persona_id
+JOIN dashboard_rol r      ON r.id = a.rol_id
+JOIN dashboard_modulo m   ON m.id = a.modulo_id
+JOIN dashboard_proyecto pr ON pr.id = m.proyecto_id
+ORDER BY pr.nombre, p.nombre;">
+            Asignaciones completas
+          </button>
+          <button class="sugerida-btn" data-query="SELECT p.nombre, p.fecha_fin, p.honorarios
+FROM dashboard_persona p
+WHERE p.fecha_fin IS NOT NULL
+  AND p.fecha_fin &lt; DATE('now')
+ORDER BY p.fecha_fin;">
+            Contratos vencidos
+          </button>
+          <button class="sugerida-btn" data-query="SELECT
+  COUNT(*) AS total_personas,
+  SUM(honorarios) AS masa_salarial,
+  AVG(honorarios) AS promedio_honorarios,
+  MAX(honorarios) AS mayor_honorario,
+  MIN(honorarios) AS menor_honorario
+FROM dashboard_persona
+WHERE honorarios IS NOT NULL;">
+            Resumen honorarios
+          </button>
+          <button class="sugerida-btn" data-query="SELECT pr.nombre AS proyecto, COUNT(DISTINCT a.persona_id) AS personas
+FROM dashboard_asignacion a
+JOIN dashboard_modulo m ON m.id = a.modulo_id
+JOIN dashboard_proyecto pr ON pr.id = m.proyecto_id
+GROUP BY pr.nombre
+ORDER BY personas DESC;">
+            Personas por proyecto
+          </button>
+          <button class="sugerida-btn" data-query="SELECT p.nombre, p.cedula, p.honorarios, p.objeto
+FROM dashboard_persona p
+WHERE p.cedula IS NULL
+ORDER BY p.nombre;">
+            Sin datos del Excel
+          </button>
+        </div>
       </aside>
 
       <!-- Panel derecho: editor + resultados -->
@@ -373,6 +450,14 @@
               Resultados
             </div>
             <span id="sqlConteo" class="sql-conteo"></span>
+            <button id="btnExportar" class="btn-exportar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              CSV
+            </button>
           </div>
           <div class="sql-tabla-wrap">
             <table id="sqlTabla" class="sql-tabla">

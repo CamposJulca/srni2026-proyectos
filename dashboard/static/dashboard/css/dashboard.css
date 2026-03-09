@@ -1010,3 +1010,58 @@ canvas { max-width: 100%; }
     position: static;
   }
 }
+
+/* ============================================================
+   CONSULTAS SUGERIDAS
+   ============================================================ */
+.sugeridas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.sugerida-btn {
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  background: var(--gris-1);
+  border: 1px solid var(--gris-2);
+  border-radius: 8px;
+  font-family: var(--fuente);
+  font-size: 0.78rem;
+  color: var(--texto-s);
+  cursor: pointer;
+  transition: var(--trans);
+  line-height: 1.35;
+}
+
+.sugerida-btn:hover {
+  background: var(--azul-s);
+  border-color: var(--azul);
+  color: var(--azul);
+}
+
+/* BOTÓN EXPORTAR CSV */
+.btn-exportar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  background: var(--verde-s);
+  border: 1px solid var(--verde);
+  border-radius: 6px;
+  color: var(--verde);
+  font-family: var(--fuente);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--trans);
+}
+
+.btn-exportar svg { width: 13px; height: 13px; }
+
+.btn-exportar:hover {
+  background: var(--verde);
+  color: var(--blanco);
+}

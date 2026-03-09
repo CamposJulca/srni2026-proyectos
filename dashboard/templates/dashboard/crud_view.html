@@ -1,0 +1,116 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Gestión de Contratistas{% endblock %}
+
+{% block content %}
+  <main class="main">
+
+    <!-- Barra de herramientas -->
+    <div class="xls-toolbar">
+      <div class="xls-toolbar-izq">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;stroke:var(--azul)">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <h2 class="xls-titulo">Contratistas SRNI</h2>
+        <span class="xls-conteo" id="xlsConteo">— registros</span>
+      </div>
+      <div class="xls-toolbar-der">
+        <div class="crud-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="crudSearch" placeholder="Buscar nombre, cédula, procedimiento..." class="crud-search xls-search">
+        </div>
+        <select id="xlsFiltroProc" class="xls-select-proc">
+          <option value="">Todos los procedimientos</option>
+          {% for proc in procedimientos %}
+          <option value="{{ proc }}">{{ proc }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn-crud-nuevo" id="btnNuevo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nuevo contratista
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla estilo Excel -->
+    <div class="xls-wrap">
+      <table class="xls-tabla">
+        <thead>
+          <tr>
+            <th class="xls-th-num">#</th>
+            <th>Nombre completo</th>
+            <th>Cédula</th>
+            <th>Procedimiento</th>
+            <th>Inicio contrato</th>
+            <th>Fin contrato</th>
+            <th>Honorarios / mes</th>
+            <th class="xls-th-acc">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="crudTbody"></tbody>
+      </table>
+      <div id="crudVacio" class="xls-vacio oculto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        <p>Sin resultados</p>
+      </div>
+    </div>
+
+    <!-- Paginación -->
+    <div class="crud-paginacion" id="crudPaginacion"></div>
+
+  </main>
+
+  <!-- MODAL CONTRATISTA -->
+  <div id="crudModal" class="modal">
+    <div class="modal-content modal-crud">
+      <button class="close" id="crudModalClose">&times;</button>
+      <div class="modal-header">
+        <div class="modal-avatar" id="crudModalAvatar">+</div>
+        <h2 id="crudModalTitulo">Nuevo contratista</h2>
+      </div>
+      <form id="crudForm" class="crud-form"></form>
+      <div class="crud-form-acciones">
+        <button type="button" class="btn-crud-cancelar" id="btnCancelar">Cancelar</button>
+        <button type="button" class="btn-crud-guardar" id="btnGuardar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIRMAR BORRADO -->
+  <div id="crudModalBorrar" class="modal">
+    <div class="modal-content modal-borrar">
+      <div class="borrar-icono">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+        </svg>
+      </div>
+      <h3>¿Eliminar contratista?</h3>
+      <p id="borrarDescripcion">Esta acción no se puede deshacer.</p>
+      <div class="borrar-acciones">
+        <button class="btn-crud-cancelar" id="btnBorrarCancelar">Cancelar</button>
+        <button class="btn-borrar-confirmar" id="btnBorrarConfirmar">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="crudToast" class="crud-toast oculto"></div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'dashboard/js/crud.js' %}"></script>
+{% endblock %}

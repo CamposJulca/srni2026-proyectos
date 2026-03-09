@@ -38,9 +38,9 @@ const CSRF = () => {
 
 
 /* =====================================================
-   INICIALIZACIÓN al activar la pestaña CRUD
+   INICIALIZACIÓN al cargar la página
 ===================================================== */
-document.querySelector('[data-tab="crud"]').addEventListener("click", () => {
+document.addEventListener("DOMContentLoaded", () => {
   cargarLista()
 })
 

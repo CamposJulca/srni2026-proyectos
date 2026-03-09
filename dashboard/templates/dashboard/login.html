@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar sesión — SRNI</title>
+  <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+</head>
+<body class="login-body">
+
+  <div class="login-wrap">
+
+    <div class="login-card">
+      <div class="login-brand">
+        <img src="{% static 'dashboard/img/escudo.png' %}" alt="Unidad para las Víctimas" class="login-logo">
+        <h1 class="login-titulo">Dashboard de Proyectos</h1>
+        <p class="login-subtitulo">Subdirección de la Red Nacional de Información</p>
+      </div>
+
+      {% if error %}
+      <div class="login-error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="post" class="login-form">
+        {% csrf_token %}
+
+        <div class="login-campo">
+          <label for="username">Usuario</label>
+          <div class="login-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            <input type="text" id="username" name="username" placeholder="Nombre de usuario" required autofocus>
+          </div>
+        </div>
+
+        <div class="login-campo">
+          <label for="password">Contraseña</label>
+          <div class="login-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="password" name="password" placeholder="••••••••" required>
+          </div>
+        </div>
+
+        <button type="submit" class="login-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Ingresar
+        </button>
+      </form>
+    </div>
+
+    <p class="login-footer">Unidad para la Atención y Reparación Integral a las Víctimas &mdash; 2025</p>
+  </div>
+
+</body>
+</html>

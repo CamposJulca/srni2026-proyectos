@@ -1,9 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.db.models import Count, Q
 from django.db import connection
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 import json
 import re
 import unicodedata
@@ -33,6 +35,47 @@ PROCEDIMIENTOS = [
     "GIS",
 ]
 
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect("/")
+    error = None
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            return redirect(request.GET.get("next", "/"))
+        error = "Usuario o contraseña incorrectos."
+    return render(request, "dashboard/login.html", {"error": error})
+
+
+def logout_view(request):
+    logout(request)
+    return redirect("/login/")
+
+
+@login_required
+def home(request):
+    return render(request, "dashboard/home.html")
+
+
+@login_required
+def consultas_view(request):
+    return render(request, "dashboard/consultas_view.html", {
+        "modulo_activo": "consultas",
+    })
+
+
+@login_required
+def crud_main_view(request):
+    return render(request, "dashboard/crud_view.html", {
+        "modulo_activo": "crud",
+        "procedimientos": PROCEDIMIENTOS,
+    })
+
+
+@login_required
 def dashboard(request):
 
     procedimiento = request.GET.get("procedimiento", "INSTRUMENTALIZACIÓN")
@@ -47,13 +90,14 @@ def dashboard(request):
 
     return render(
         request,
-        "dashboard/dashboard.html",
+        "dashboard/dashboard_view.html",
         {
             "personas": personas,
             "roles": roles,
             "proyectos": proyectos,
             "procedimientos": PROCEDIMIENTOS,
             "procedimiento_activo": procedimiento,
+            "modulo_activo": "dashboard",
         }
     )
 

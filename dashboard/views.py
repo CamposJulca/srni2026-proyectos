@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db import connection
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 import json
 import re
 import unicodedata
@@ -16,6 +17,10 @@ from .models import (
     PlanAccion
 )
 
+
+# ============================================================
+#  CONFIGURACIÓN CRUD
+# ============================================================
 
 PROCEDIMIENTOS = [
     "INSTRUMENTALIZACIÓN",
@@ -184,6 +189,246 @@ def sql_query(request):
         })
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+
+
+# ============================================================
+#  CRUD API
+# ============================================================
+
+def _opciones_fk(modelo, campo_display="nombre"):
+    return [{"id": o.pk, "label": str(getattr(o, campo_display, o.pk))}
+            for o in modelo.objects.all().order_by(campo_display)]
+
+
+TABLA_META = {
+    "persona": {
+        "modelo": Persona,
+        "label": "Personas",
+        "icono": "personas",
+        "buscar_en": ["nombre", "cedula", "procedimiento"],
+        "campos": [
+            {"name": "nombre",        "label": "Nombre completo", "type": "text",     "required": True},
+            {"name": "cedula",        "label": "Cédula",          "type": "text"},
+            {"name": "procedimiento", "label": "Procedimiento",   "type": "select",   "opciones_fijas": None},
+            {"name": "fecha_inicio",  "label": "Fecha inicio",    "type": "date"},
+            {"name": "fecha_fin",     "label": "Fecha fin",       "type": "date"},
+            {"name": "honorarios",    "label": "Honorarios",      "type": "number"},
+            {"name": "objeto",        "label": "Objeto contrato", "type": "textarea"},
+            {"name": "obligaciones",  "label": "Obligaciones",    "type": "textarea"},
+        ],
+        "columnas_lista": ["nombre", "cedula", "procedimiento", "fecha_inicio", "fecha_fin", "honorarios"],
+    },
+    "proyecto": {
+        "modelo": Proyecto,
+        "label": "Proyectos",
+        "icono": "proyectos",
+        "buscar_en": ["nombre"],
+        "campos": [
+            {"name": "nombre", "label": "Nombre", "type": "text", "required": True},
+        ],
+        "columnas_lista": ["nombre"],
+    },
+    "modulo": {
+        "modelo": Modulo,
+        "label": "Módulos",
+        "icono": "modulos",
+        "buscar_en": ["nombre", "referente"],
+        "campos": [
+            {"name": "proyecto_id", "label": "Proyecto",  "type": "fk",  "required": True, "fk_modelo": "Proyecto"},
+            {"name": "nombre",      "label": "Nombre",    "type": "text", "required": True},
+            {"name": "referente",   "label": "Referente", "type": "text"},
+        ],
+        "columnas_lista": ["nombre", "proyecto__nombre", "referente"],
+    },
+    "rol": {
+        "modelo": Rol,
+        "label": "Roles",
+        "icono": "roles",
+        "buscar_en": ["nombre"],
+        "campos": [
+            {"name": "nombre", "label": "Nombre", "type": "text", "required": True},
+        ],
+        "columnas_lista": ["nombre"],
+    },
+    "asignacion": {
+        "modelo": Asignacion,
+        "label": "Asignaciones",
+        "icono": "asignaciones",
+        "buscar_en": [],
+        "campos": [
+            {"name": "persona_id", "label": "Persona", "type": "fk", "required": True, "fk_modelo": "Persona"},
+            {"name": "rol_id",     "label": "Rol",     "type": "fk", "required": True, "fk_modelo": "Rol"},
+            {"name": "modulo_id",  "label": "Módulo",  "type": "fk", "required": True, "fk_modelo": "Modulo"},
+        ],
+        "columnas_lista": ["persona__nombre", "rol__nombre", "modulo__nombre", "modulo__proyecto__nombre"],
+    },
+    "planaccion": {
+        "modelo": PlanAccion,
+        "label": "Planes de acción",
+        "icono": "planaccion",
+        "buscar_en": ["compromiso", "mes"],
+        "campos": [
+            {"name": "modulo_id",   "label": "Módulo",      "type": "fk",      "required": True, "fk_modelo": "Modulo"},
+            {"name": "mes",         "label": "Mes",         "type": "select",  "opciones_fijas": [
+                "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+                "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
+            ]},
+            {"name": "compromiso",  "label": "Compromiso",  "type": "textarea","required": True},
+        ],
+        "columnas_lista": ["modulo__nombre", "modulo__proyecto__nombre", "mes", "compromiso"],
+    },
+}
+
+FK_MODELOS = {
+    "Persona": Persona,
+    "Proyecto": Proyecto,
+    "Modulo":   Modulo,
+    "Rol":      Rol,
+}
+
+
+def _serializar_fila(obj, columnas):
+    fila = {"id": obj.pk}
+    for col in columnas:
+        if "__" in col:
+            partes = col.split("__")
+            val = obj
+            for p in partes:
+                val = getattr(val, p, None)
+                if val is None:
+                    break
+        else:
+            val = getattr(obj, col, None)
+        if hasattr(val, 'isoformat'):
+            val = val.isoformat()
+        fila[col] = str(val) if val is not None else None
+    return fila
+
+
+def crud_meta(request):
+    """Devuelve metadatos de todas las tablas (campos, conteos, opciones FK)."""
+    resultado = {}
+    for key, cfg in TABLA_META.items():
+        campos = []
+        for c in cfg["campos"]:
+            campo = dict(c)
+            if campo["type"] == "fk":
+                fk_m = FK_MODELOS.get(campo.get("fk_modelo"))
+                campo["opciones"] = _opciones_fk(fk_m) if fk_m else []
+            elif campo["name"] == "procedimiento":
+                campo["opciones_fijas"] = PROCEDIMIENTOS
+            campos.append(campo)
+        resultado[key] = {
+            "label":    cfg["label"],
+            "campos":   campos,
+            "columnas": cfg["columnas_lista"],
+            "total":    cfg["modelo"].objects.count(),
+        }
+    return JsonResponse(resultado)
+
+
+def crud_lista(request, tabla):
+    cfg = TABLA_META.get(tabla)
+    if not cfg:
+        return JsonResponse({"error": "Tabla no válida."}, status=404)
+
+    qs = cfg["modelo"].objects.all()
+
+    # Búsqueda
+    q = request.GET.get("q", "").strip()
+    if q and cfg["buscar_en"]:
+        filtro = Q()
+        for campo in cfg["buscar_en"]:
+            filtro |= Q(**{f"{campo}__icontains": q})
+        qs = qs.filter(filtro)
+
+    # Relacionados
+    if tabla == "modulo":
+        qs = qs.select_related("proyecto")
+    elif tabla == "asignacion":
+        qs = qs.select_related("persona", "rol", "modulo", "modulo__proyecto")
+    elif tabla == "planaccion":
+        qs = qs.select_related("modulo", "modulo__proyecto")
+
+    total = qs.count()
+    page  = int(request.GET.get("page", 1))
+    size  = 25
+    qs    = qs[(page-1)*size : page*size]
+
+    filas = [_serializar_fila(obj, cfg["columnas_lista"]) for obj in qs]
+    return JsonResponse({"filas": filas, "total": total, "page": page, "size": size})
+
+
+def crud_detalle(request, tabla, pk):
+    cfg = TABLA_META.get(tabla)
+    if not cfg:
+        return JsonResponse({"error": "Tabla no válida."}, status=404)
+
+    try:
+        obj = cfg["modelo"].objects.get(pk=pk)
+    except cfg["modelo"].DoesNotExist:
+        return JsonResponse({"error": "Registro no encontrado."}, status=404)
+
+    if request.method == "GET":
+        datos = {"id": obj.pk}
+        for c in cfg["campos"]:
+            val = getattr(obj, c["name"], None)
+            if hasattr(val, 'isoformat'):
+                val = val.isoformat()
+            datos[c["name"]] = val
+        return JsonResponse(datos)
+
+    if request.method in ("PUT", "PATCH"):
+        try:
+            body = json.loads(request.body)
+        except Exception:
+            return JsonResponse({"error": "JSON inválido."}, status=400)
+        for c in cfg["campos"]:
+            nombre = c["name"]
+            if nombre in body:
+                val = body[nombre] or None
+                setattr(obj, nombre, val)
+        try:
+            obj.save()
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        return JsonResponse({"ok": True, "id": obj.pk})
+
+    if request.method == "DELETE":
+        try:
+            obj.delete()
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        return JsonResponse({"ok": True})
+
+    return JsonResponse({"error": "Método no permitido."}, status=405)
+
+
+def crud_crear(request, tabla):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido."}, status=405)
+
+    cfg = TABLA_META.get(tabla)
+    if not cfg:
+        return JsonResponse({"error": "Tabla no válida."}, status=404)
+
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return JsonResponse({"error": "JSON inválido."}, status=400)
+
+    kwargs = {}
+    for c in cfg["campos"]:
+        nombre = c["name"]
+        val = body.get(nombre) or None
+        kwargs[nombre] = val
+
+    try:
+        obj = cfg["modelo"].objects.create(**kwargs)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    return JsonResponse({"ok": True, "id": obj.pk}, status=201)
 
 
 def _normalizar(s):

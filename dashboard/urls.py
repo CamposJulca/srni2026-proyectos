@@ -17,4 +17,10 @@ urlpatterns = [
         name="sql_query"
     ),
 
+    path(
+        "carga/",
+        views.carga,
+        name="carga"
+    ),
+
 ]

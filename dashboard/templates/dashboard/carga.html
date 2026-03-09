@@ -1,0 +1,272 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carga de Contratistas — SRNI</title>
+  <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'dashboard/css/carga.css' %}">
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-franja"></div>
+    <div class="header-content">
+      <div class="header-logo-wrap">
+        <img src="{% static 'dashboard/img/escudo.png' %}" alt="Unidad para las Víctimas" class="header-logo">
+      </div>
+      <div class="header-divider"></div>
+      <div class="header-texto">
+        <h1 class="header-titulo">Carga de Contratistas</h1>
+        <p class="header-subtitulo">Importar desde Excel — Subdirección de la Red Nacional de Información</p>
+      </div>
+      <a href="/" class="header-badge" style="text-decoration:none;">&#8592; Dashboard</a>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <div class="carga-layout">
+
+      <!-- INFO IZQUIERDA -->
+      <aside class="carga-sidebar">
+        <div class="sidebar-titulo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          ¿Qué importa?
+        </div>
+        <ul class="info-lista">
+          <li>
+            <span class="info-badge badge-verde">Nuevas</span>
+            Personas que están en el Excel pero no en la BD — se crean
+          </li>
+          <li>
+            <span class="info-badge badge-azul">Actualizadas</span>
+            Personas que ya existen — se enriquecen con cédula, fechas, honorarios y obligaciones
+          </li>
+          <li>
+            <span class="info-badge badge-gris">Sin cambios</span>
+            Personas en BD que no aparecen en el Excel — se conservan intactas
+          </li>
+        </ul>
+
+        <div class="sidebar-titulo" style="margin-top:24px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+          </svg>
+          Columnas que se leen
+        </div>
+        <ul class="cols-lista">
+          <li><code>NOMBRES CONTRATISTA</code></li>
+          <li><code>APELLIDOS CONTRATISTA</code></li>
+          <li><code>NUMERO DE CEDULA</code></li>
+          <li><code>FECHA ESTIMADA INICIO CONTRATO</code></li>
+          <li><code>FECHA TERMINACION CONTRATO</code></li>
+          <li><code>VALOR HONORARIOS MENSUALES ESTIMADOS</code></li>
+          <li><code>OBJETO PAA</code></li>
+          <li><code>OBLIGACIONES</code></li>
+          <li><code>DEPENDENCIA ASOCIADA</code> <span class="col-tag col-fk">filtro SRNI</span></li>
+        </ul>
+      </aside>
+
+      <!-- PANEL PRINCIPAL -->
+      <div class="carga-main">
+
+        <!-- DROP ZONE -->
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="archivoInput" accept=".xlsx,.xls" hidden>
+          <div class="drop-icono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p class="drop-texto">Arrastra tu archivo Excel aquí</p>
+          <p class="drop-sub">o</p>
+          <button class="btn-seleccionar" id="btnSeleccionar">Seleccionar archivo</button>
+          <p class="drop-hint">Acepta .xlsx &mdash; Solo hoja <strong>OPS 2026</strong>, filas SRNI</p>
+        </div>
+
+        <!-- ARCHIVO SELECCIONADO -->
+        <div class="archivo-info oculto" id="archivoInfo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span id="archivoNombre"></span>
+          <span id="archivoPeso" class="archivo-peso"></span>
+          <button class="btn-quitar" id="btnQuitar">&times;</button>
+        </div>
+
+        <!-- BOTÓN IMPORTAR -->
+        <div class="carga-acciones oculto" id="cargaAcciones">
+          <button class="btn-importar" id="btnImportar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Importar a la base de datos
+          </button>
+        </div>
+
+        <!-- RESULTADO -->
+        <div class="resultado oculto" id="resultado">
+
+          <div class="resultado-titulo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Importación completada
+          </div>
+
+          <div class="resultado-stats">
+            <div class="stat-card stat-verde">
+              <span class="stat-num" id="statCreadas">0</span>
+              <span class="stat-label">Personas creadas</span>
+            </div>
+            <div class="stat-card stat-azul">
+              <span class="stat-num" id="statActualizadas">0</span>
+              <span class="stat-label">Actualizadas</span>
+            </div>
+          </div>
+
+          <div class="resultado-listas">
+            <div class="lista-bloque" id="bloqueCreadas">
+              <h4>Nuevas personas creadas</h4>
+              <ul id="listaCreadas"></ul>
+            </div>
+            <div class="lista-bloque" id="bloqueActualizadas">
+              <h4>Personas actualizadas</h4>
+              <ul id="listaActualizadas"></ul>
+            </div>
+          </div>
+
+          <a href="/" class="btn-volver">Ver Dashboard</a>
+        </div>
+
+        <!-- ERROR -->
+        <div class="carga-error oculto" id="cargaError">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span id="cargaErrorMsg"></span>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <img src="{% static 'dashboard/img/escudo.png' %}" alt="" class="footer-logo">
+    <p>Unidad para la Atención y Reparación Integral a las Víctimas &mdash; SRNI &mdash; 2025</p>
+  </footer>
+
+  <div class="marca-agua" aria-hidden="true">
+    <img src="{% static 'dashboard/img/escudo.png' %}" alt="">
+  </div>
+
+  <script>
+  const dropzone   = document.getElementById("dropzone")
+  const fileInput  = document.getElementById("archivoInput")
+  const btnSel     = document.getElementById("btnSeleccionar")
+  const archivoInfo = document.getElementById("archivoInfo")
+  const archivoNombre = document.getElementById("archivoNombre")
+  const archivoPeso = document.getElementById("archivoPeso")
+  const btnQuitar  = document.getElementById("btnQuitar")
+  const cargaAcc   = document.getElementById("cargaAcciones")
+  const btnImportar = document.getElementById("btnImportar")
+  const resultado  = document.getElementById("resultado")
+  const cargaError = document.getElementById("cargaError")
+
+  let archivoSeleccionado = null
+
+  btnSel.addEventListener("click", () => fileInput.click())
+
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files[0]) setArchivo(fileInput.files[0])
+  })
+
+  dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("drag-over") })
+  dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag-over"))
+  dropzone.addEventListener("drop", e => {
+    e.preventDefault()
+    dropzone.classList.remove("drag-over")
+    if (e.dataTransfer.files[0]) setArchivo(e.dataTransfer.files[0])
+  })
+
+  function setArchivo(file) {
+    archivoSeleccionado = file
+    archivoNombre.textContent = file.name
+    archivoPeso.textContent = (file.size / 1024).toFixed(1) + " KB"
+    archivoInfo.classList.remove("oculto")
+    cargaAcc.classList.remove("oculto")
+    resultado.classList.add("oculto")
+    cargaError.classList.add("oculto")
+    dropzone.classList.add("tiene-archivo")
+  }
+
+  btnQuitar.addEventListener("click", () => {
+    archivoSeleccionado = null
+    fileInput.value = ""
+    archivoInfo.classList.add("oculto")
+    cargaAcc.classList.add("oculto")
+    dropzone.classList.remove("tiene-archivo")
+  })
+
+  btnImportar.addEventListener("click", () => {
+    if (!archivoSeleccionado) return
+
+    btnImportar.disabled = true
+    btnImportar.textContent = "Importando..."
+
+    const form = new FormData()
+    form.append("archivo", archivoSeleccionado)
+    form.append("csrfmiddlewaretoken", getCookie("csrftoken"))
+
+    fetch("/carga/", { method: "POST", body: form })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          document.getElementById("cargaErrorMsg").textContent = data.error
+          cargaError.classList.remove("oculto")
+        } else {
+          mostrarResultado(data)
+        }
+      })
+      .catch(() => {
+        document.getElementById("cargaErrorMsg").textContent = "Error de conexión."
+        cargaError.classList.remove("oculto")
+      })
+      .finally(() => {
+        btnImportar.disabled = false
+        btnImportar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Importar a la base de datos`
+      })
+  })
+
+  function mostrarResultado(data) {
+    document.getElementById("statCreadas").textContent = data.total_creadas
+    document.getElementById("statActualizadas").textContent = data.total_actualizadas
+
+    const ulC = document.getElementById("listaCreadas")
+    ulC.innerHTML = data.creadas.map(n => `<li>${n}</li>`).join("") || "<li>Ninguna</li>"
+
+    const ulA = document.getElementById("listaActualizadas")
+    ulA.innerHTML = data.actualizadas.map(n => `<li>${n}</li>`).join("") || "<li>Ninguna</li>"
+
+    document.getElementById("bloqueCreadas").style.display = data.creadas.length ? "block" : "none"
+    document.getElementById("bloqueActualizadas").style.display = data.actualizadas.length ? "block" : "none"
+
+    resultado.classList.remove("oculto")
+    cargaAcc.classList.add("oculto")
+    resultado.scrollIntoView({ behavior: "smooth" })
+  }
+
+  function getCookie(name) {
+    const val = document.cookie.split(";").find(c => c.trim().startsWith(name + "="))
+    return val ? decodeURIComponent(val.trim().split("=")[1]) : ""
+  }
+  </script>
+</body>
+</html>

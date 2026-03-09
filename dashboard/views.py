@@ -218,16 +218,6 @@ TABLA_META = {
         ],
         "columnas_lista": ["nombre", "cedula", "procedimiento", "fecha_inicio", "fecha_fin", "honorarios"],
     },
-    "proyecto": {
-        "modelo": Proyecto,
-        "label": "Proyectos",
-        "icono": "proyectos",
-        "buscar_en": ["nombre"],
-        "campos": [
-            {"name": "nombre", "label": "Nombre", "type": "text", "required": True},
-        ],
-        "columnas_lista": ["nombre"],
-    },
     "modulo": {
         "modelo": Modulo,
         "label": "Módulos",

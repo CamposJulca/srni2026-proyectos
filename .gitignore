@@ -7,3 +7,8 @@ __pycache__/
 
 staticfiles/
 
+# Archivos de datos sensibles (cédulas, honorarios)
+data/*.xlsx
+data/*.xls
+data/*.csv
+

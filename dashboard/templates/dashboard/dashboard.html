@@ -1,196 +1,244 @@
 {% load static %}
-
 <!DOCTYPE html>
-<html>
-
+<html lang="es">
 <head>
-
-<meta charset="UTF-8">
-
-<div class="titulo-institucional">
-
-<h1>Dashboard de Proyectos</h1>
-
-<h2>
-Procedimiento de Instrumentalización<br>
-Subdirección de la Red Nacional de Información<br>
-Unidad para las Víctimas
-</h2>
-
-</div>
-
-<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Proyectos — SRNI</title>
+  <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
-<div class="container">
-
-<h1>Dashboard Proyectos</h1>
-
-
-<!-- FILTROS -->
-
-<div class="filtros">
-
-<select id="personaFiltro">
-
-<option value="">Todas las personas</option>
-
-{% for p in personas %}
-
-<option value="{{p.id}}">{{p.nombre}}</option>
-
-{% endfor %}
-
-</select>
-
-
-<select id="rolFiltro">
-
-<option value="">Todos los roles</option>
-
-{% for r in roles %}
-
-<option value="{{r.id}}">{{r.nombre}}</option>
-
-{% endfor %}
-
-</select>
-
-
-<select id="proyectoFiltro">
-
-<option value="">Todos los proyectos</option>
-
-{% for p in proyectos %}
-
-<option value="{{p.id}}">{{p.nombre}}</option>
-
-{% endfor %}
-
-</select>
-
-</div>
-
-
-
-<!-- KPIs -->
-
-<div class="kpi-container">
-
-<div class="kpi-card">
-<h3>Proyectos</h3>
-<h2 id="kpiProyectos">0</h2>
-</div>
-
-<div class="kpi-card">
-<h3>Módulos</h3>
-<h2 id="kpiModulos">0</h2>
-</div>
-
-<div class="kpi-card">
-<h3>Personas</h3>
-<h2 id="kpiPersonas">0</h2>
-</div>
-
-<div class="kpi-card">
-<h3>Asignaciones</h3>
-<h2 id="kpiAsignaciones">0</h2>
-</div>
-
-</div>
-
-
-
-<!-- GRAFICOS PRINCIPALES -->
-
-<div class="graficos">
-
-<div class="grafico-card">
-
-<h3>Proyectos por persona</h3>
-
-<div class="grafico-scroll">
-
-<canvas id="graficoPersonas"></canvas>
-
-</div>
-
-</div>
-
-
-<div class="grafico-card">
-
-<h3>Roles</h3>
-
-<canvas id="graficoRoles"></canvas>
-
-</div>
-
-</div>
-
-
-
-<!-- GRAFICOS SECUNDARIOS -->
-
-<div class="graficos">
-
-<div class="grafico-card">
-
-<h3>Módulos por proyecto</h3>
-
-<canvas id="graficoModulos"></canvas>
-
-</div>
-
-
-<div class="grafico-card">
-
-<h3>Compromisos por mes</h3>
-
-<canvas id="graficoMes"></canvas>
-
-</div>
-
-</div>
-
-</div>
-
-
-
-<!-- MODAL PERSONA -->
-
-<div id="modalPersona" class="modal">
-
-<div class="modal-content">
-
-<span class="close">&times;</span>
-
-<h2 id="modalNombre"></h2>
-
-<p id="modalTexto">
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
-nisi ut aliquip ex ea commodo consequat.
-
-</p>
-
-</div>
-
-</div>
-
-
-
-<!-- JAVASCRIPT -->
-
-<script src="{% static 'dashboard/js/dashboard.js' %}"></script>
-
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-franja"></div>
+    <div class="header-content">
+
+      <div class="header-logo-wrap">
+        <img src="{% static 'dashboard/img/escudo.png' %}" alt="Unidad para las Víctimas" class="header-logo">
+      </div>
+
+      <div class="header-divider"></div>
+
+      <div class="header-texto">
+        <h1 class="header-titulo">Dashboard de Proyectos</h1>
+        <p class="header-subtitulo">Subdirección de la Red Nacional de Información</p>
+      </div>
+
+      <div class="header-badge">SRNI 2025</div>
+
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- FILTROS -->
+    <section class="filtros-section">
+      <div class="filtros-header">
+        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+        </svg>
+        <span class="section-title">Filtros</span>
+      </div>
+      <div class="filtros">
+
+        <div class="filtro-grupo">
+          <label for="personaFiltro">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            Persona
+          </label>
+          <select id="personaFiltro">
+            <option value="">Todas las personas</option>
+            {% for p in personas %}
+            <option value="{{ p.id }}">{{ p.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filtro-grupo">
+          <label for="rolFiltro">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+            Rol
+          </label>
+          <select id="rolFiltro">
+            <option value="">Todos los roles</option>
+            {% for r in roles %}
+            <option value="{{ r.id }}">{{ r.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filtro-grupo">
+          <label for="proyectoFiltro">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>
+            </svg>
+            Proyecto
+          </label>
+          <select id="proyectoFiltro">
+            <option value="">Todos los proyectos</option>
+            {% for p in proyectos %}
+            <option value="{{ p.id }}">{{ p.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- KPIs -->
+    <section class="kpi-section">
+      <div class="kpi-container">
+
+        <div class="kpi-card" data-color="amarillo">
+          <div class="kpi-icono">
+            <!-- Cohete / Proyectos -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.76.69-1.96-.06-2.71a2.06 2.06 0 0 0-2.94-.29z"/>
+              <path d="m3.29 15 1.43 1.43a7.5 7.5 0 0 0 9.45-9.45l-1.43-1.43a7.5 7.5 0 0 0-9.45 9.45z"/>
+              <path d="m12 8 2 2"/><circle cx="17" cy="7" r="1"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <p class="kpi-label">Proyectos</p>
+            <h2 class="kpi-valor" id="kpiProyectos">0</h2>
+          </div>
+          <div class="kpi-deco"></div>
+        </div>
+
+        <div class="kpi-card" data-color="azul">
+          <div class="kpi-icono">
+            <!-- Capas / Módulos -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+              <polyline points="2 17 12 22 22 17"/>
+              <polyline points="2 12 12 17 22 12"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <p class="kpi-label">Módulos</p>
+            <h2 class="kpi-valor" id="kpiModulos">0</h2>
+          </div>
+          <div class="kpi-deco"></div>
+        </div>
+
+        <div class="kpi-card" data-color="rojo">
+          <div class="kpi-icono">
+            <!-- Personas -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <p class="kpi-label">Personas</p>
+            <h2 class="kpi-valor" id="kpiPersonas">0</h2>
+          </div>
+          <div class="kpi-deco"></div>
+        </div>
+
+        <div class="kpi-card" data-color="verde">
+          <div class="kpi-icono">
+            <!-- Portapapeles check / Asignaciones -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+              <rect x="9" y="3" width="6" height="4" rx="1"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <p class="kpi-label">Asignaciones</p>
+            <h2 class="kpi-valor" id="kpiAsignaciones">0</h2>
+          </div>
+          <div class="kpi-deco"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- GRÁFICOS PRINCIPALES -->
+    <section class="graficos-section">
+      <div class="graficos">
+
+        <div class="grafico-card">
+          <div class="grafico-header">
+            <div class="grafico-dot dot-azul"></div>
+            <h3 class="grafico-titulo">Proyectos por persona</h3>
+          </div>
+          <div class="grafico-scroll">
+            <canvas id="graficoPersonas"></canvas>
+          </div>
+        </div>
+
+        <div class="grafico-card">
+          <div class="grafico-header">
+            <div class="grafico-dot dot-amarillo"></div>
+            <h3 class="grafico-titulo">Distribución de roles</h3>
+          </div>
+          <div class="grafico-centrado">
+            <canvas id="graficoRoles"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- GRÁFICOS SECUNDARIOS -->
+    <section class="graficos-section">
+      <div class="graficos">
+
+        <div class="grafico-card">
+          <div class="grafico-header">
+            <div class="grafico-dot dot-verde"></div>
+            <h3 class="grafico-titulo">Módulos por proyecto</h3>
+          </div>
+          <canvas id="graficoModulos"></canvas>
+        </div>
+
+        <div class="grafico-card">
+          <div class="grafico-header">
+            <div class="grafico-dot dot-rojo"></div>
+            <h3 class="grafico-titulo">Compromisos por mes</h3>
+          </div>
+          <canvas id="graficoMes"></canvas>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <img src="{% static 'dashboard/img/escudo.png' %}" alt="Unidad para las Víctimas" class="footer-logo">
+    <p>Unidad para la Atención y Reparación Integral a las Víctimas &mdash; SRNI &mdash; 2025</p>
+  </footer>
+
+  <!-- MODAL PERSONA -->
+  <div id="modalPersona" class="modal">
+    <div class="modal-content">
+      <button class="close" aria-label="Cerrar">&times;</button>
+      <div class="modal-header">
+        <div class="modal-avatar" id="modalAvatar"></div>
+        <h2 id="modalNombre"></h2>
+      </div>
+      <div id="modalTexto"></div>
+    </div>
+  </div>
+
+  <!-- MARCA DE AGUA -->
+  <div class="marca-agua" aria-hidden="true">
+    <img src="{% static 'dashboard/img/escudo.png' %}" alt="">
+  </div>
+
+  <script src="{% static 'dashboard/js/dashboard.js' %}"></script>
 </body>
-
 </html>

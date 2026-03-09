@@ -541,6 +541,11 @@ let modal = document.getElementById("modalPersona")
 
 document.getElementById("modalNombre").innerText = nombre
 
+// Avatar con iniciales
+const partes = nombre.trim().split(" ")
+const iniciales = (partes[0][0] + (partes[1] ? partes[1][0] : "")).toUpperCase()
+document.getElementById("modalAvatar").innerText = iniciales
+
 let contenido = ""
 
 if(obligaciones[nombre]){

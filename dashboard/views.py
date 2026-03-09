@@ -17,9 +17,26 @@ from .models import (
 )
 
 
+PROCEDIMIENTOS = [
+    "INSTRUMENTALIZACIÓN",
+    "EQUIPO BASE",
+    "ANÁLISIS",
+    "CARACTERIZACIÓN",
+    "DIFUSIÓN Y APRENDIZAJE",
+    "AIDI",
+    "MESA DE SERVICIOS",
+    "GIS",
+]
+
 def dashboard(request):
 
-    personas = Persona.objects.all()
+    procedimiento = request.GET.get("procedimiento", "INSTRUMENTALIZACIÓN")
+
+    if procedimiento:
+        personas = Persona.objects.filter(procedimiento=procedimiento).order_by("nombre")
+    else:
+        personas = Persona.objects.all().order_by("nombre")
+
     roles = Rol.objects.all()
     proyectos = Proyecto.objects.all()
 
@@ -29,7 +46,9 @@ def dashboard(request):
         {
             "personas": personas,
             "roles": roles,
-            "proyectos": proyectos
+            "proyectos": proyectos,
+            "procedimientos": PROCEDIMIENTOS,
+            "procedimiento_activo": procedimiento,
         }
     )
 

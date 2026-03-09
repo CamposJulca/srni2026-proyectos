@@ -1072,3 +1072,43 @@ canvas { max-width: 100%; }
   color: #15803d;
   font-weight: 700;
 }
+
+/* ============================================================
+   BARRA DE PROCEDIMIENTOS
+   ============================================================ */
+.proc-section {
+  margin-bottom: 20px;
+}
+
+.proc-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.proc-btn {
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 2px solid var(--gris-2);
+  background: var(--blanco);
+  color: var(--texto-s);
+  transition: var(--trans);
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
+.proc-btn:hover {
+  border-color: var(--azul);
+  color: var(--azul);
+  background: var(--azul-s);
+}
+
+.proc-btn.active {
+  background: var(--azul);
+  border-color: var(--azul);
+  color: var(--blanco);
+  box-shadow: 0 2px 10px rgba(0,48,135,0.25);
+}

@@ -52,6 +52,22 @@
   <!-- ======================= TAB: DASHBOARD ======================= -->
   <main class="main tab-panel active" id="tab-dashboard">
 
+    <!-- PROCEDIMIENTOS -->
+    <section class="proc-section">
+      <div class="proc-bar">
+        <a href="?procedimiento="
+           class="proc-btn {% if not procedimiento_activo %}active{% endif %}">
+          Todos
+        </a>
+        {% for proc in procedimientos %}
+        <a href="?procedimiento={{ proc }}"
+           class="proc-btn {% if procedimiento_activo == proc %}active{% endif %}">
+          {{ proc }}
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+
     <!-- FILTROS -->
     <section class="filtros-section">
       <div class="filtros-header">

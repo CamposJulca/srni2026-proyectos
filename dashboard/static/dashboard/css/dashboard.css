@@ -712,6 +712,7 @@ canvas { max-width: 100%; }
 .home-card-amarillo:hover { border-color: var(--amarillo); }
 .home-card-azul:hover     { border-color: var(--azul); }
 .home-card-rojo:hover     { border-color: var(--rojo); }
+.home-card-verde:hover    { border-color: var(--verde); }
 
 .home-card-icono {
   width: 56px; height: 56px;
@@ -722,6 +723,8 @@ canvas { max-width: 100%; }
 .home-card-amarillo .home-card-icono { background: rgba(252,209,22,0.15); }
 .home-card-azul     .home-card-icono { background: rgba(0,48,135,0.1); }
 .home-card-rojo     .home-card-icono { background: rgba(206,17,38,0.1); }
+.home-card-verde    .home-card-icono { background: rgba(16,185,129,0.12); }
+.home-card-verde::before             { background: var(--verde); }
 
 .home-card-icono svg {
   width: 28px; height: 28px;
@@ -729,6 +732,56 @@ canvas { max-width: 100%; }
 .home-card-amarillo .home-card-icono svg { stroke: #b8960d; }
 .home-card-azul     .home-card-icono svg { stroke: var(--azul); }
 .home-card-rojo     .home-card-icono svg { stroke: var(--rojo); }
+.home-card-verde    .home-card-icono svg { stroke: var(--verde); }
+
+/* =====================================================
+   GERENCIAL — Encabezado
+===================================================== */
+.ger-header-section {
+  padding: 24px 32px 0;
+}
+.ger-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, var(--azul), #001a52);
+  border-radius: 14px;
+  padding: 20px 28px;
+  color: var(--blanco);
+}
+.ger-header-icono {
+  width: 48px; height: 48px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ger-header-icono svg {
+  width: 26px; height: 26px;
+  stroke: var(--amarillo);
+}
+.ger-titulo {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0 0 3px;
+}
+.ger-subtitulo {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.65);
+  margin: 0;
+}
+.ger-fecha {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.55);
+  text-align: right;
+  text-transform: capitalize;
+}
+
+.grafico-card-wide {
+  flex: 2;
+  min-width: 0;
+}
 
 .home-card-info {
   flex: 1;

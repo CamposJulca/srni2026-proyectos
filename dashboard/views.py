@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
+from datetime import date
 from django.db import connection
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -72,6 +73,51 @@ def crud_main_view(request):
     return render(request, "dashboard/crud_view.html", {
         "modulo_activo": "crud",
         "procedimientos": PROCEDIMIENTOS,
+    })
+
+
+@login_required
+def gerencial_view(request):
+    return render(request, "dashboard/gerencial_view.html", {
+        "modulo_activo": "gerencial",
+    })
+
+
+@login_required
+def gerencial_data(request):
+    hoy = date.today()
+
+    total       = Persona.objects.count()
+    masa        = Persona.objects.filter(honorarios__isnull=False).aggregate(t=Sum('honorarios'))['t'] or 0
+    vigentes    = Persona.objects.filter(fecha_fin__isnull=False, fecha_fin__gte=hoy).count()
+    vencidos    = Persona.objects.filter(fecha_fin__isnull=False, fecha_fin__lt=hoy).count()
+    sin_fecha   = Persona.objects.filter(fecha_fin__isnull=True).count()
+
+    por_proc = list(
+        Persona.objects.values('procedimiento')
+        .annotate(personas=Count('id'), masa=Sum('honorarios'))
+        .order_by('-personas')
+    )
+    # convertir Decimal a float para JSON
+    for p in por_proc:
+        p['masa'] = float(p['masa'] or 0)
+        p['procedimiento'] = p['procedimiento'] or 'Sin clasificar'
+
+    compromisos_mes = list(
+        PlanAccion.objects.values('mes')
+        .annotate(total=Count('id'))
+    )
+
+    return JsonResponse({
+        'kpis': {
+            'total':     total,
+            'masa':      float(masa),
+            'vigentes':  vigentes,
+            'vencidos':  vencidos,
+            'sin_fecha': sin_fecha,
+        },
+        'por_procedimiento': por_proc,
+        'compromisos_mes':   compromisos_mes,
     })
 
 

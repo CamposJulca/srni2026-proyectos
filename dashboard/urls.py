@@ -8,13 +8,15 @@ urlpatterns = [
     path('logout/', views.logout_view, name="logout"),
 
     # Páginas
-    path('',           views.home,           name="home"),
-    path('dashboard/', views.dashboard,      name="dashboard"),
-    path('consultas/', views.consultas_view, name="consultas"),
-    path('crud/',      views.crud_main_view, name="crud_main"),
+    path('',            views.home,            name="home"),
+    path('dashboard/',  views.dashboard,       name="dashboard"),
+    path('gerencial/',  views.gerencial_view,  name="gerencial"),
+    path('consultas/',  views.consultas_view,  name="consultas"),
+    path('crud/',       views.crud_main_view,  name="crud_main"),
 
     # APIs
-    path("api/dashboard/",                    views.dashboard_data, name="dashboard_data"),
+    path("api/dashboard/",                    views.dashboard_data,  name="dashboard_data"),
+    path("api/gerencial/",                    views.gerencial_data,  name="gerencial_data"),
     path("api/sql/",                          views.sql_query,      name="sql_query"),
     path("api/crud/meta/",                    views.crud_meta,      name="crud_meta"),
     path("api/crud/<str:tabla>/",             views.crud_lista,     name="crud_lista"),

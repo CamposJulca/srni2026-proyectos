@@ -1,0 +1,153 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Vista Gerencial{% endblock %}
+
+{% block head_extra %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+  <main class="main">
+
+    <!-- ENCABEZADO -->
+    <section class="ger-header-section">
+      <div class="ger-header">
+        <div class="ger-header-icono">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="ger-titulo">Vista Gerencial — SRNI</h2>
+          <p class="ger-subtitulo">Resumen ejecutivo para la Subdirección de la Red Nacional de Información</p>
+        </div>
+        <span class="ger-fecha" id="gerFecha"></span>
+      </div>
+    </section>
+
+    <!-- KPIs -->
+    <section class="kpi-section">
+      <div class="kpi-container">
+
+        <div class="kpi-card" data-color="azul">
+          <div class="kpi-icono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <p class="kpi-label">Total contratistas</p>
+            <h2 class="kpi-valor" id="gerTotal">0</h2>
+          </div>
+          <div class="kpi-deco"></div>
+        </div>
+
+        <div class="kpi-card" data-color="amarillo">
+          <div class="kpi-icono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <p class="kpi-label">Masa salarial / mes</p>
+            <h2 class="kpi-valor" id="gerMasa">$0</h2>
+          </div>
+          <div class="kpi-deco"></div>
+        </div>
+
+        <div class="kpi-card" data-color="verde">
+          <div class="kpi-icono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <p class="kpi-label">Contratos vigentes</p>
+            <h2 class="kpi-valor" id="gerVigentes">0</h2>
+          </div>
+          <div class="kpi-deco"></div>
+        </div>
+
+        <div class="kpi-card" data-color="rojo">
+          <div class="kpi-icono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <p class="kpi-label">Contratos vencidos</p>
+            <h2 class="kpi-valor" id="gerVencidos">0</h2>
+          </div>
+          <div class="kpi-deco"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- GRÁFICOS FILA 1 -->
+    <section class="graficos-section">
+      <div class="graficos">
+
+        <div class="grafico-card grafico-card-wide">
+          <div class="grafico-header">
+            <div class="grafico-dot dot-azul"></div>
+            <h3 class="grafico-titulo">Contratistas por procedimiento</h3>
+          </div>
+          <div class="grafico-scroll">
+            <canvas id="gerGraficoProc"></canvas>
+          </div>
+        </div>
+
+        <div class="grafico-card">
+          <div class="grafico-header">
+            <div class="grafico-dot dot-verde"></div>
+            <h3 class="grafico-titulo">Estado de contratos</h3>
+          </div>
+          <div class="grafico-centrado">
+            <canvas id="gerGraficoEstado"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- GRÁFICOS FILA 2 -->
+    <section class="graficos-section">
+      <div class="graficos">
+
+        <div class="grafico-card grafico-card-wide">
+          <div class="grafico-header">
+            <div class="grafico-dot dot-amarillo"></div>
+            <h3 class="grafico-titulo">Masa salarial por procedimiento ($ / mes)</h3>
+          </div>
+          <div class="grafico-scroll">
+            <canvas id="gerGraficoMasa"></canvas>
+          </div>
+        </div>
+
+        <div class="grafico-card">
+          <div class="grafico-header">
+            <div class="grafico-dot dot-rojo"></div>
+            <h3 class="grafico-titulo">Compromisos por mes</h3>
+          </div>
+          <canvas id="gerGraficoMes"></canvas>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'dashboard/js/gerencial.js' %}"></script>
+{% endblock %}

@@ -11,7 +11,7 @@
   <main class="main">
 
     <!-- PROCEDIMIENTOS -->
-    <section class="proc-section">
+    <section class="proc-section" id="procSection" data-procedimiento="{{ procedimiento_activo }}">
       <div class="proc-bar">
         <a href="?procedimiento="
            class="proc-btn {% if not procedimiento_activo %}active{% endif %}">
@@ -196,12 +196,46 @@
       </div>
     </section>
 
+    <!-- OCUPACIÓN POR COLABORADOR -->
+    <section class="graficos-section">
+      <div class="grafico-card" style="width:100%">
+        <div class="grafico-header">
+          <div class="grafico-dot dot-azul"></div>
+          <h3 class="grafico-titulo">Ocupación por colaborador</h3>
+          <span style="font-size:0.78rem;color:var(--texto-s);margin-left:8px;">
+            proyectos asignados / total proyectos
+          </span>
+        </div>
+        <div id="ocupacionLista"></div>
+      </div>
+    </section>
+
   </main>
+
+  <!-- MODAL ROL -->
+  <div id="modalRol" class="modal">
+    <div class="modal-content modal-content-rol">
+      <button class="close" id="closeRol" aria-label="Cerrar">&times;</button>
+      <div class="modal-header">
+        <div class="modal-avatar modal-avatar-rol" id="modalRolIcono">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <p class="modal-rol-etiqueta">ROL</p>
+          <h2 id="modalRolTitulo"></h2>
+        </div>
+      </div>
+      <p class="modal-rol-contexto" id="modalRolContexto"></p>
+      <div id="modalRolTexto"></div>
+    </div>
+  </div>
 
   <!-- MODAL PERSONA -->
   <div id="modalPersona" class="modal">
     <div class="modal-content">
-      <button class="close" aria-label="Cerrar">&times;</button>
+      <button class="close" id="closePersona" aria-label="Cerrar">&times;</button>
       <div class="modal-header">
         <div class="modal-avatar" id="modalAvatar"></div>
         <h2 id="modalNombre"></h2>

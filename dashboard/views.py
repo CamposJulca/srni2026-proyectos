@@ -153,6 +153,7 @@ def dashboard_data(request):
     persona = request.GET.get("persona")
     rol = request.GET.get("rol")
     proyecto = request.GET.get("proyecto")
+    procedimiento = request.GET.get("procedimiento")
 
     asignaciones = Asignacion.objects.select_related(
         "persona",
@@ -174,10 +175,12 @@ def dashboard_data(request):
     # KPIs
     # ==============================
 
+    personas_qs = Persona.objects.filter(procedimiento=procedimiento) if procedimiento else Persona.objects.all()
+
     kpis = {
         "proyectos": Proyecto.objects.count(),
         "modulos": Modulo.objects.count(),
-        "personas": Persona.objects.count(),
+        "personas": personas_qs.count(),
         "asignaciones": asignaciones.count(),
     }
 
@@ -520,6 +523,31 @@ def _normalizar(s):
     s = str(s).upper().strip()
     return ''.join(c for c in unicodedata.normalize('NFD', s)
                    if unicodedata.category(c) != 'Mn')
+
+
+def personas_por_rol(request):
+    rol_nombre = request.GET.get("rol", "")
+    proyecto_id = request.GET.get("proyecto", "")
+
+    qs = Asignacion.objects.select_related(
+        "persona", "rol", "modulo", "modulo__proyecto"
+    )
+
+    if rol_nombre:
+        qs = qs.filter(rol__nombre=rol_nombre)
+    if proyecto_id:
+        qs = qs.filter(modulo__proyecto_id=proyecto_id)
+
+    data = [
+        {
+            "persona": a.persona.nombre,
+            "modulo":  a.modulo.nombre,
+            "proyecto": a.modulo.proyecto.nombre,
+        }
+        for a in qs.order_by("persona__nombre")
+    ]
+
+    return JsonResponse({"asignaciones": data})
 
 
 def carga(request):

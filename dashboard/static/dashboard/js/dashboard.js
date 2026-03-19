@@ -321,7 +321,8 @@ let rol = document.getElementById("rolFiltro").value
 let proyecto = document.getElementById("proyectoFiltro").value
 
 
-fetch(`/api/dashboard/?persona=${persona}&rol=${rol}&proyecto=${proyecto}`)
+const procedimiento = document.getElementById('procSection').dataset.procedimiento || ''
+fetch(`/api/dashboard/?persona=${persona}&rol=${rol}&proyecto=${proyecto}&procedimiento=${encodeURIComponent(procedimiento)}`)
 .then(response => response.json())
 .then(data => {
 
@@ -331,6 +332,7 @@ graficoPersonas(data.proyectos_persona)
 graficoRoles(data.roles_persona)
 graficoModulos(data.modulos_proyecto)
 graficoMes(data.compromisos_mes)
+renderOcupacion(data.proyectos_persona, data.kpis.proyectos)
 
 })
 
@@ -424,22 +426,35 @@ let valores = datos.map(x => x.total)
 
 if(chartRoles){ chartRoles.destroy() }
 
-chartRoles = new Chart(
+const canvasRoles = document.getElementById("graficoRoles")
 
-document.getElementById("graficoRoles"),
-
-{
+chartRoles = new Chart(canvasRoles, {
 type:"pie",
-
 data:{
 labels:labels,
-datasets:[{
-data:valores
-}]
+datasets:[{data:valores}]
 },
-options:{responsive:true}
-
+options:{
+responsive:true,
+plugins:{
+tooltip:{
+callbacks:{
+label: ctx => ` ${ctx.label}: ${ctx.raw} persona${ctx.raw !== 1 ? 's' : ''}`
+}
+}
+}
+}
 })
+
+canvasRoles.style.cursor = "pointer"
+canvasRoles.onclick = function(evt){
+const points = chartRoles.getElementsAtEventForMode(evt,'nearest',{intersect:true},true)
+if(points.length){
+const rol = labels[points[0].index]
+const proyecto = document.getElementById("proyectoFiltro").value
+abrirModalRol(rol, proyecto)
+}
+}
 
 }
 
@@ -532,6 +547,85 @@ stepSize:1
 
 
 /* =========================
+OCUPACIÓN POR COLABORADOR
+========================= */
+
+function renderOcupacion(proyectosPersona, totalProyectos){
+
+const lista = document.getElementById("ocupacionLista")
+
+if(!proyectosPersona.length || !totalProyectos){
+lista.innerHTML = '<p style="color:var(--texto-s);padding:12px 0;font-size:0.9rem;">Sin datos de asignaciones.</p>'
+return
+}
+
+const datos = [...proyectosPersona].sort((a,b) => b.total - a.total)
+
+let html = '<div class="ocupacion-lista">'
+
+datos.forEach(p => {
+const pct = Math.min(100, Math.round(p.total / totalProyectos * 100))
+const clase = pct >= 67 ? 'bar-alto' : pct >= 34 ? 'bar-medio' : 'bar-bajo'
+html += `<div class="ocupacion-fila">
+  <div class="ocupacion-nombre" title="${p.persona__nombre}">${p.persona__nombre}</div>
+  <div class="ocupacion-barra-wrap">
+    <div class="ocupacion-barra ${clase}" style="width:${pct}%"></div>
+  </div>
+  <div class="ocupacion-pct">${pct}%</div>
+  <div class="ocupacion-detalle">${p.total}&nbsp;/&nbsp;${totalProyectos} proy.</div>
+</div>`
+})
+
+html += '</div>'
+lista.innerHTML = html
+
+}
+
+
+/* =========================
+MODAL ROL
+========================= */
+
+function abrirModalRol(rol, proyecto){
+
+let url = `/api/dashboard/personas-por-rol/?rol=${encodeURIComponent(rol)}`
+if(proyecto) url += `&proyecto=${encodeURIComponent(proyecto)}`
+
+fetch(url)
+.then(r => r.json())
+.then(data => {
+
+document.getElementById("modalRolTitulo").innerText = rol
+
+// contexto de proyecto
+const sel = document.getElementById("proyectoFiltro")
+const nombreProy = sel.options[sel.selectedIndex]?.text || ""
+document.getElementById("modalRolContexto").innerText =
+  proyecto ? `Proyecto: ${nombreProy}` : "Todos los proyectos"
+
+let html = ""
+if(!data.asignaciones.length){
+  html = `<p class="modal-lista-vacio">No hay colaboradores con este rol${proyecto ? " en el proyecto seleccionado" : ""}.</p>`
+} else {
+  html = `<ul class="modal-lista">`
+  data.asignaciones.forEach(a => {
+    html += `<li>
+      <div class="modal-lista-nombre">${a.persona}</div>
+      <div class="modal-lista-sub">${a.modulo} &mdash; ${a.proyecto}</div>
+    </li>`
+  })
+  html += `</ul>`
+}
+
+document.getElementById("modalRolTexto").innerHTML = html
+document.getElementById("modalRol").style.display = "flex"
+
+})
+
+}
+
+
+/* =========================
 MODAL PERSONA
 ========================= */
 
@@ -573,23 +667,19 @@ modal.style.display="flex"
 }
 
 
-document.querySelector(".close").onclick=function(){
-
+document.getElementById("closePersona").onclick=function(){
 document.getElementById("modalPersona").style.display="none"
-
 }
 
+document.getElementById("closeRol").onclick=function(){
+document.getElementById("modalRol").style.display="none"
+}
 
 window.onclick=function(event){
-
-let modal = document.getElementById("modalPersona")
-
-if(event.target==modal){
-
-modal.style.display="none"
-
-}
-
+const modalPersona = document.getElementById("modalPersona")
+const modalRol     = document.getElementById("modalRol")
+if(event.target==modalPersona) modalPersona.style.display="none"
+if(event.target==modalRol)     modalRol.style.display="none"
 }
 
 

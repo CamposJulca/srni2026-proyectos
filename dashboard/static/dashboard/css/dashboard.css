@@ -475,6 +475,91 @@ canvas { max-width: 100%; }
 #modalTexto ol { padding-left: 20px; }
 #modalTexto li { margin-bottom: 8px; }
 
+/* Modal Rol */
+.modal-content-rol { border-top-color: var(--verde); max-width: 560px; }
+.modal-avatar-rol {
+  background: linear-gradient(135deg, var(--verde), #2d8a3e);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-rol-etiqueta {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--verde); text-transform: uppercase; margin-bottom: 2px;
+}
+.modal-rol-contexto {
+  font-size: 0.8rem; color: var(--texto-s); margin: -8px 0 14px;
+}
+#modalRolTexto {
+  max-height: 55vh; overflow-y: auto; padding-right: 4px;
+}
+.modal-lista {
+  list-style: none; padding: 0; margin: 0;
+}
+.modal-lista li {
+  padding: 10px 14px; border-radius: 8px; margin-bottom: 6px;
+  background: var(--gris-2);
+}
+.modal-lista-nombre {
+  font-weight: 600; color: var(--texto); font-size: 0.9rem;
+}
+.modal-lista-sub {
+  font-size: 0.78rem; color: var(--texto-s); margin-top: 2px;
+}
+.modal-lista-vacio {
+  color: var(--texto-s); font-size: 0.9rem; padding: 12px 0;
+}
+
+/* ============================================================
+   OCUPACIÓN POR COLABORADOR
+   ============================================================ */
+.ocupacion-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.ocupacion-fila {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) 1fr 52px 60px;
+  align-items: center;
+  gap: 12px;
+}
+.ocupacion-nombre {
+  font-size: 0.82rem;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+.ocupacion-barra-wrap {
+  background: var(--gris-2);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+.ocupacion-barra {
+  height: 8px;
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.bar-alto   { background: var(--rojo); }
+.bar-medio  { background: var(--amarillo); }
+.bar-bajo   { background: var(--verde); }
+.ocupacion-pct {
+  font-weight: 700;
+  font-size: 0.83rem;
+  color: var(--texto);
+  text-align: right;
+}
+.ocupacion-detalle {
+  font-size: 0.75rem;
+  color: var(--texto-s);
+  text-align: right;
+  white-space: nowrap;
+}
+
 .close {
   position: absolute;
   top: 14px;

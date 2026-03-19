@@ -15,7 +15,8 @@ urlpatterns = [
     path('crud/',       views.crud_main_view,  name="crud_main"),
 
     # APIs
-    path("api/dashboard/",                    views.dashboard_data,  name="dashboard_data"),
+    path("api/dashboard/",                    views.dashboard_data,     name="dashboard_data"),
+    path("api/dashboard/personas-por-rol/",   views.personas_por_rol,   name="personas_por_rol"),
     path("api/gerencial/",                    views.gerencial_data,  name="gerencial_data"),
     path("api/sql/",                          views.sql_query,      name="sql_query"),
     path("api/crud/meta/",                    views.crud_meta,      name="crud_meta"),

@@ -13,3 +13,5 @@ data/*.xls
 data/*.csv
 
 db.sqlite3
+data/clausulados instrumentalizacion/
+data/correos/

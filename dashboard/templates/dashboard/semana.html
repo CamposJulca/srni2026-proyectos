@@ -1,0 +1,164 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Vista Semanal{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{% static 'dashboard/css/actividades.css' %}">
+<link rel="stylesheet" href="{% static 'dashboard/css/semana.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="page-main">
+  <div class="act-page">
+
+    <!-- TOOLBAR -->
+    <div class="act-toolbar">
+      <div class="act-toolbar-left">
+        <h2 class="act-titulo">Vista Semanal de Compromisos</h2>
+        <span class="act-subtitulo">Instrumentalización SRNI · 2026</span>
+      </div>
+      <div class="act-toolbar-right">
+        <div class="act-filtros">
+          <select id="filtro-colaborador-sem" class="act-select">
+            <option value="">Todos los colaboradores</option>
+            {% for c in colaboradores %}
+            <option value="{{ c }}" {% if c == colaborador_inicial %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <a href="/actividades/resumen/" class="act-btn-secundario" style="display:flex;align-items:center;gap:6px;text-decoration:none;height:36px;padding:0 14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Resumen General
+        </a>
+        <a href="/actividades/" class="act-btn-secundario" style="display:flex;align-items:center;gap:6px;text-decoration:none;height:36px;padding:0 14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Ver Gantt
+        </a>
+      </div>
+    </div>
+
+    <!-- NAVEGADOR DE SEMANAS -->
+    <div class="sem-nav">
+      <button class="sem-nav-btn" id="btn-sem-prev" title="Semana anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+
+      <div class="sem-nav-center">
+        <select id="sel-semana" class="sem-select">
+          {% for s in semanas %}
+          <option value="{{ s }}" {% if s == semana_inicial %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+        <div class="sem-fechas" id="sem-fechas">—</div>
+      </div>
+
+      <button class="sem-nav-btn" id="btn-sem-next" title="Semana siguiente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+
+      <button class="sem-btn-hoy" id="btn-hoy">Semana actual</button>
+    </div>
+
+    <!-- RESUMEN STATS -->
+    <div class="sem-stats" id="sem-stats">
+      <div class="sem-stat">
+        <span id="sem-stat-colaboradores">0</span>
+        <small>Colaboradores activos</small>
+      </div>
+      <div class="sem-stat">
+        <span id="sem-stat-actividades">0</span>
+        <small>Compromisos esta semana</small>
+      </div>
+      <div class="sem-stat sem-stat-completada">
+        <span id="sem-stat-completadas">0</span>
+        <small>Completados</small>
+      </div>
+      <div class="sem-stat sem-stat-pendiente">
+        <span id="sem-stat-pendientes">0</span>
+        <small>Pendientes</small>
+      </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL: tarjetas por colaborador -->
+    <div id="sem-body">
+      <div class="sem-loading" id="sem-loading">
+        <div class="sem-spinner"></div>
+        <p>Cargando compromisos...</p>
+      </div>
+      <div class="sem-vacio" id="sem-vacio" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        <p>No hay compromisos programados para esta semana</p>
+      </div>
+      <div class="sem-grid" id="sem-grid"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODAL EDITAR ESTADO/PROGRESO -->
+<div class="act-modal-overlay" id="act-modal-overlay">
+  <div class="act-modal" id="act-modal">
+    <div class="act-modal-header">
+      <h3 id="act-modal-titulo">Actualizar actividad</h3>
+      <button class="act-modal-close" id="act-modal-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <form id="act-modal-form" class="act-modal-body">
+      <input type="hidden" id="modal-id">
+      <div class="act-form-group">
+        <label>Descripción</label>
+        <p id="modal-desc-texto" style="font-size:0.85rem;color:var(--texto);padding:8px 0;line-height:1.5"></p>
+      </div>
+      <div class="act-form-group">
+        <label>Obligación</label>
+        <p id="modal-oblig-texto" style="font-size:0.82rem;color:var(--texto-s);padding:4px 0"></p>
+      </div>
+      <div class="act-form-row">
+        <div class="act-form-group">
+          <label>Estado</label>
+          <select id="modal-estado" class="act-select">
+            <option value="pendiente">Pendiente</option>
+            <option value="en_curso">En Curso</option>
+            <option value="completada">Completada</option>
+            <option value="bloqueada">Bloqueada</option>
+          </select>
+        </div>
+        <div class="act-form-group">
+          <label>Progreso: <span id="modal-progreso-val">0</span>%</label>
+          <input type="range" id="modal-progreso" min="0" max="100" value="0">
+        </div>
+      </div>
+      <div class="act-modal-footer">
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button type="button" class="act-btn-secundario" id="btn-modal-cancelar">Cancelar</button>
+          <button type="submit" class="act-btn-primario">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SEMANAS_ORDENADAS = {{ semanas|safe }};
+const SEMANA_ACTUAL_DEFAULT = "{{ semana_actual }}";
+const SEMANA_FECHAS = {{ semana_fechas }};
+</script>
+<script src="{% static 'dashboard/js/semana.js' %}"></script>
+{% endblock %}

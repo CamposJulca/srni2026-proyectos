@@ -26,4 +26,18 @@ urlpatterns = [
 
     path("carga/", views.carga, name="carga"),
 
+    # Actividades / Gantt
+    path("actividades/",              views.actividades_view,    name="actividades"),
+    path("api/actividades/",          views.actividades_data,    name="actividades_data"),
+    path("api/actividades/crear/",    views.actividad_crear,     name="actividad_crear"),
+    path("api/actividades/<int:pk>/", views.actividad_detalle,   name="actividad_detalle"),
+
+    # Vista Semanal
+    path("actividades/semana/",       views.semana_view,         name="semana"),
+    path("api/actividades/semana/",   views.semana_data,         name="semana_data"),
+
+    # Vista Resumen General (subdirector)
+    path("actividades/resumen/",      views.resumen_view,        name="resumen"),
+    path("api/actividades/resumen/",  views.resumen_data,        name="resumen_data"),
+
 ]

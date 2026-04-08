@@ -7,7 +7,9 @@
   <main class="main">
     <div class="sql-layout">
 
-      <!-- Panel izquierdo: esquema de tablas -->
+      <!-- ══════════════════════════════════════════════
+           SIDEBAR: esquema de tablas + sugeridas
+           ══════════════════════════════════════════════ -->
       <aside class="sql-sidebar">
         <div class="sidebar-titulo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -17,11 +19,22 @@
           Esquema de tablas
         </div>
 
+        {% comment %}── dashboard_procedimiento ──{% endcomment %}
+        <div class="tabla-ref" data-tabla="dashboard_procedimiento">
+          <div class="tabla-nombre">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            dashboard_procedimiento
+          </div>
+          <div class="tabla-cols">
+            <span class="col-tag col-pk">id</span>
+            <span class="col-tag">nombre</span>
+          </div>
+        </div>
+
+        {% comment %}── dashboard_proyecto ──{% endcomment %}
         <div class="tabla-ref" data-tabla="dashboard_proyecto">
           <div class="tabla-nombre">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
             dashboard_proyecto
           </div>
           <div class="tabla-cols">
@@ -30,11 +43,10 @@
           </div>
         </div>
 
+        {% comment %}── dashboard_modulo ──{% endcomment %}
         <div class="tabla-ref" data-tabla="dashboard_modulo">
           <div class="tabla-nombre">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
             dashboard_modulo
           </div>
           <div class="tabla-cols">
@@ -45,31 +57,28 @@
           </div>
         </div>
 
-        <div class="tabla-ref" data-tabla="dashboard_persona">
+        {% comment %}── dashboard_colaborador ──{% endcomment %}
+        <div class="tabla-ref" data-tabla="dashboard_colaborador">
           <div class="tabla-nombre">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-            </svg>
-            dashboard_persona
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            dashboard_colaborador
           </div>
           <div class="tabla-cols">
             <span class="col-tag col-pk">id</span>
+            <span class="col-tag col-fk">procedimiento_id</span>
             <span class="col-tag">nombre</span>
             <span class="col-tag">cedula</span>
-            <span class="col-tag col-new">procedimiento</span>
             <span class="col-tag">fecha_inicio</span>
             <span class="col-tag">fecha_fin</span>
             <span class="col-tag">honorarios</span>
             <span class="col-tag">objeto</span>
-            <span class="col-tag">obligaciones</span>
           </div>
         </div>
 
+        {% comment %}── dashboard_rol ──{% endcomment %}
         <div class="tabla-ref" data-tabla="dashboard_rol">
           <div class="tabla-nombre">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
             dashboard_rol
           </div>
           <div class="tabla-cols">
@@ -78,33 +87,51 @@
           </div>
         </div>
 
+        {% comment %}── dashboard_asignacion ──{% endcomment %}
         <div class="tabla-ref" data-tabla="dashboard_asignacion">
           <div class="tabla-nombre">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
             dashboard_asignacion
           </div>
           <div class="tabla-cols">
             <span class="col-tag col-pk">id</span>
             <span class="col-tag col-fk">modulo_id</span>
-            <span class="col-tag col-fk">persona_id</span>
+            <span class="col-tag col-fk">colaborador_id</span>
             <span class="col-tag col-fk">rol_id</span>
           </div>
         </div>
 
-        <div class="tabla-ref" data-tabla="dashboard_planaccion">
+        {% comment %}── dashboard_obligacion ──{% endcomment %}
+        <div class="tabla-ref" data-tabla="dashboard_obligacion">
           <div class="tabla-nombre">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-            </svg>
-            dashboard_planaccion
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            dashboard_obligacion
           </div>
           <div class="tabla-cols">
             <span class="col-tag col-pk">id</span>
-            <span class="col-tag col-fk">modulo_id</span>
-            <span class="col-tag">compromiso</span>
-            <span class="col-tag">mes</span>
+            <span class="col-tag col-fk">colaborador_id</span>
+            <span class="col-tag">descripcion</span>
+          </div>
+        </div>
+
+        {% comment %}── dashboard_actividad ──{% endcomment %}
+        <div class="tabla-ref" data-tabla="dashboard_actividad">
+          <div class="tabla-nombre">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            dashboard_actividad
+          </div>
+          <div class="tabla-cols">
+            <span class="col-tag col-pk">id</span>
+            <span class="col-tag col-fk">obligacion_id</span>
+            <span class="col-tag col-fk">proyecto_id</span>
+            <span class="col-tag">actividad_id</span>
+            <span class="col-tag">descripcion</span>
+            <span class="col-tag">fecha_inicio</span>
+            <span class="col-tag">fecha_fin</span>
+            <span class="col-tag">progreso</span>
+            <span class="col-tag">estado</span>
+            <span class="col-tag">orden</span>
+            <span class="col-tag">semanas_activas</span>
           </div>
         </div>
 
@@ -122,164 +149,330 @@
         </div>
 
         <div class="sugeridas">
-          <button class="sugerida-btn" data-query="SELECT nombre, cedula, fecha_inicio, fecha_fin, honorarios
-FROM dashboard_persona
-WHERE cedula IS NOT NULL
-ORDER BY nombre;">
-            Contratistas con datos completos
-          </button>
-          <button class="sugerida-btn" data-query="SELECT nombre, honorarios
-FROM dashboard_persona
-WHERE honorarios IS NOT NULL
-ORDER BY honorarios DESC
+          <button class="sugerida-btn" data-query="SELECT id, nombre, cedula, fecha_inicio, fecha_fin, honorarios
+FROM dashboard_colaborador
+ORDER BY nombre
 LIMIT 20;">
-            Top 20 por honorarios
+            Todos los colaboradores
           </button>
-          <button class="sugerida-btn" data-query="SELECT p.nombre, p.cedula, p.honorarios, p.fecha_inicio, p.fecha_fin
-FROM dashboard_persona p
-INNER JOIN dashboard_asignacion a ON a.persona_id = p.id
-GROUP BY p.id
-ORDER BY p.nombre;">
-            Contratistas con asignación
+          <button class="sugerida-btn" data-query="SELECT c.nombre, c.cedula, c.honorarios, p.nombre AS procedimiento
+FROM dashboard_colaborador c
+LEFT JOIN dashboard_procedimiento p ON p.id = c.procedimiento_id
+ORDER BY p.nombre, c.nombre;">
+            Colaboradores por procedimiento
           </button>
-          <button class="sugerida-btn" data-query="SELECT p.nombre, r.nombre AS rol, pr.nombre AS proyecto
+          <button class="sugerida-btn" data-query="SELECT c.nombre, r.nombre AS rol, pr.nombre AS proyecto, m.nombre AS modulo
 FROM dashboard_asignacion a
-JOIN dashboard_persona p  ON p.id = a.persona_id
-JOIN dashboard_rol r      ON r.id = a.rol_id
-JOIN dashboard_modulo m   ON m.id = a.modulo_id
-JOIN dashboard_proyecto pr ON pr.id = m.proyecto_id
-ORDER BY pr.nombre, p.nombre;">
+JOIN dashboard_colaborador c ON c.id = a.colaborador_id
+JOIN dashboard_rol r         ON r.id = a.rol_id
+JOIN dashboard_modulo m      ON m.id = a.modulo_id
+JOIN dashboard_proyecto pr   ON pr.id = m.proyecto_id
+ORDER BY pr.nombre, c.nombre;">
             Asignaciones completas
           </button>
-          <button class="sugerida-btn" data-query="SELECT p.nombre, p.fecha_fin, p.honorarios
-FROM dashboard_persona p
-WHERE p.fecha_fin IS NOT NULL
-  AND p.fecha_fin &lt; DATE('now')
-ORDER BY p.fecha_fin;">
+          <button class="sugerida-btn" data-query="SELECT pr.nombre AS proyecto, COUNT(DISTINCT a.colaborador_id) AS colaboradores
+FROM dashboard_asignacion a
+JOIN dashboard_modulo m   ON m.id = a.modulo_id
+JOIN dashboard_proyecto pr ON pr.id = m.proyecto_id
+GROUP BY pr.nombre
+ORDER BY colaboradores DESC;">
+            Colaboradores por proyecto
+          </button>
+          <button class="sugerida-btn" data-query="SELECT c.nombre, o.descripcion AS obligacion
+FROM dashboard_obligacion o
+JOIN dashboard_colaborador c ON c.id = o.colaborador_id
+ORDER BY c.nombre;">
+            Obligaciones por colaborador
+          </button>
+          <button class="sugerida-btn" data-query="SELECT c.nombre, a.actividad_id, a.descripcion, a.estado, a.progreso,
+       a.fecha_inicio, a.fecha_fin
+FROM dashboard_actividad a
+JOIN dashboard_obligacion o  ON o.id = a.obligacion_id
+JOIN dashboard_colaborador c ON c.id = o.colaborador_id
+ORDER BY c.nombre, a.orden;">
+            Actividades por colaborador
+          </button>
+          <button class="sugerida-btn" data-query="SELECT estado, COUNT(*) AS total,
+       ROUND(AVG(progreso),1) AS progreso_promedio
+FROM dashboard_actividad
+GROUP BY estado
+ORDER BY total DESC;">
+            Resumen por estado de actividad
+          </button>
+          <button class="sugerida-btn" data-query="SELECT c.nombre, c.fecha_fin, c.honorarios
+FROM dashboard_colaborador c
+WHERE c.fecha_fin IS NOT NULL
+  AND c.fecha_fin &lt; DATE('now')
+ORDER BY c.fecha_fin;">
             Contratos vencidos
           </button>
           <button class="sugerida-btn" data-query="SELECT
-  COUNT(*) AS total_personas,
+  COUNT(*) AS total_colaboradores,
   SUM(honorarios) AS masa_salarial,
-  AVG(honorarios) AS promedio_honorarios,
-  MAX(honorarios) AS mayor_honorario,
-  MIN(honorarios) AS menor_honorario
-FROM dashboard_persona
+  ROUND(AVG(honorarios),0) AS promedio,
+  MAX(honorarios) AS mayor,
+  MIN(honorarios) AS menor
+FROM dashboard_colaborador
 WHERE honorarios IS NOT NULL;">
             Resumen honorarios
           </button>
-          <button class="sugerida-btn" data-query="SELECT pr.nombre AS proyecto, COUNT(DISTINCT a.persona_id) AS personas
-FROM dashboard_asignacion a
-JOIN dashboard_modulo m ON m.id = a.modulo_id
-JOIN dashboard_proyecto pr ON pr.id = m.proyecto_id
-GROUP BY pr.nombre
-ORDER BY personas DESC;">
-            Personas por proyecto
-          </button>
-          <button class="sugerida-btn" data-query="SELECT p.nombre, p.cedula, p.honorarios, p.objeto
-FROM dashboard_persona p
-WHERE p.cedula IS NULL
-ORDER BY p.nombre;">
-            Sin datos del Excel
-          </button>
-          <button class="sugerida-btn" data-query="SELECT procedimiento, COUNT(*) AS personas,
-  SUM(honorarios) AS masa_salarial
-FROM dashboard_persona
-WHERE procedimiento IS NOT NULL
-GROUP BY procedimiento
+          <button class="sugerida-btn" data-query="SELECT p.nombre AS procedimiento, COUNT(*) AS personas,
+  SUM(c.honorarios) AS masa_salarial
+FROM dashboard_colaborador c
+JOIN dashboard_procedimiento p ON p.id = c.procedimiento_id
+GROUP BY p.nombre
 ORDER BY personas DESC;">
             Personas por procedimiento
-          </button>
-          <button class="sugerida-btn" data-query="SELECT nombre, cedula, honorarios, fecha_inicio, fecha_fin
-FROM dashboard_persona
-WHERE procedimiento = 'INSTRUMENTALIZACIÓN'
-ORDER BY nombre;">
-            Equipo Instrumentalización
           </button>
         </div>
       </aside>
 
-      <!-- Panel derecho: editor + resultados -->
+      <!-- ══════════════════════════════════════════════
+           PANEL PRINCIPAL
+           ══════════════════════════════════════════════ -->
       <div class="sql-main">
 
-        <div class="sql-editor-card">
-          <div class="sql-editor-header">
+        <!-- TAB SWITCHER -->
+        <div class="sql-tabs">
+          <button class="sql-tab-btn activo" data-panel="erd">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="6" height="5" rx="1"/><rect x="16" y="3" width="6" height="5" rx="1"/>
+              <rect x="2" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/>
+              <line x1="8" y1="5.5" x2="16" y2="5.5"/><line x1="8" y1="18.5" x2="16" y2="18.5"/>
+              <line x1="12" y1="5.5" x2="12" y2="16"/>
+            </svg>
+            Diagrama ERD
+          </button>
+          <button class="sql-tab-btn" data-panel="sql">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
             </svg>
-            <span>Editor SQL</span>
-            <span class="sql-hint">Solo consultas SELECT &mdash; máx. 500 filas</span>
-          </div>
-          <textarea
-            id="sqlInput"
-            class="sql-textarea"
-            placeholder="SELECT * FROM dashboard_persona LIMIT 10;"
-            spellcheck="false"
-          ></textarea>
-          <div class="sql-actions">
-            <button id="btnEjecutar" class="btn-ejecutar">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"/>
-              </svg>
-              Ejecutar
-            </button>
-            <button id="btnLimpiar" class="btn-limpiar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
-                <path d="M9 6V4h6v2"/>
-              </svg>
-              Limpiar
-            </button>
-          </div>
+            Editor SQL
+          </button>
         </div>
 
-        <!-- Resultados -->
-        <div id="sqlResultados" class="sql-resultados oculto">
-          <div class="sql-resultado-header">
-            <div class="sql-resultado-titulo">
+        <!-- ── TAB: DIAGRAMA ERD ───────────────────────── -->
+        <div id="panel-erd" class="sql-tab-panel activo">
+          <div class="erd-card">
+            <div class="erd-card-header">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/>
+                <rect x="2" y="3" width="6" height="5" rx="1"/><rect x="16" y="3" width="6" height="5" rx="1"/>
+                <rect x="2" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/>
+                <line x1="8" y1="5.5" x2="16" y2="5.5"/><line x1="8" y1="18.5" x2="16" y2="18.5"/>
+                <line x1="12" y1="5.5" x2="12" y2="16"/>
               </svg>
-              Resultados
+              <span>Modelo Entidad–Relación</span>
+              <span class="erd-card-hint">Estado actual · 8 entidades</span>
             </div>
-            <span id="sqlConteo" class="sql-conteo"></span>
-            <button id="btnExportar" class="btn-exportar">
+
+            <div class="erd-body">
+              <div class="erd-wrap" id="erd-wrap">
+                <svg id="erd-svg" class="erd-svg"></svg>
+
+                <!-- ── Fila 1 ─────────────────────────────── -->
+
+                <div class="eT" id="eT-procedimiento" style="left:0px;top:0px">
+                  <div class="eT-head">
+                    <div class="eT-name">Procedimiento</div>
+                    <div class="eT-db">dashboard_procedimiento</div>
+                  </div>
+                  <div class="eT-col"><span class="eT-badge eT-pk">PK</span>id</div>
+                  <div class="eT-col">nombre</div>
+                </div>
+
+                <div class="eT" id="eT-colaborador" style="left:205px;top:0px">
+                  <div class="eT-head">
+                    <div class="eT-name">Colaborador</div>
+                    <div class="eT-db">dashboard_colaborador</div>
+                  </div>
+                  <div class="eT-col"><span class="eT-badge eT-pk">PK</span>id</div>
+                  <div class="eT-col"><span class="eT-badge eT-fk">FK</span>procedimiento_id</div>
+                  <div class="eT-col">nombre</div>
+                  <div class="eT-col">cedula</div>
+                  <div class="eT-col">fecha_inicio</div>
+                  <div class="eT-col">fecha_fin</div>
+                  <div class="eT-col">honorarios</div>
+                  <div class="eT-col">objeto</div>
+                </div>
+
+                <div class="eT" id="eT-obligacion" style="left:410px;top:0px">
+                  <div class="eT-head">
+                    <div class="eT-name">Obligacion</div>
+                    <div class="eT-db">dashboard_obligacion</div>
+                  </div>
+                  <div class="eT-col"><span class="eT-badge eT-pk">PK</span>id</div>
+                  <div class="eT-col"><span class="eT-badge eT-fk">FK</span>colaborador_id</div>
+                  <div class="eT-col">descripcion</div>
+                </div>
+
+                <div class="eT" id="eT-actividad" style="left:615px;top:0px">
+                  <div class="eT-head">
+                    <div class="eT-name">Actividad</div>
+                    <div class="eT-db">dashboard_actividad</div>
+                  </div>
+                  <div class="eT-col"><span class="eT-badge eT-pk">PK</span>id</div>
+                  <div class="eT-col"><span class="eT-badge eT-fk">FK</span>obligacion_id</div>
+                  <div class="eT-col"><span class="eT-badge eT-fk-opt">FK?</span>proyecto_id</div>
+                  <div class="eT-col">actividad_id</div>
+                  <div class="eT-col">descripcion</div>
+                  <div class="eT-col">fecha_inicio</div>
+                  <div class="eT-col">fecha_fin</div>
+                  <div class="eT-col">progreso</div>
+                  <div class="eT-col">estado</div>
+                  <div class="eT-col">orden</div>
+                  <div class="eT-col">semanas_activas</div>
+                </div>
+
+                <!-- ── Fila 2 ─────────────────────────────── -->
+
+                <div class="eT" id="eT-rol" style="left:0px;top:400px">
+                  <div class="eT-head">
+                    <div class="eT-name">Rol</div>
+                    <div class="eT-db">dashboard_rol</div>
+                  </div>
+                  <div class="eT-col"><span class="eT-badge eT-pk">PK</span>id</div>
+                  <div class="eT-col">nombre</div>
+                </div>
+
+                <div class="eT" id="eT-asignacion" style="left:205px;top:400px">
+                  <div class="eT-head">
+                    <div class="eT-name">Asignacion</div>
+                    <div class="eT-db">dashboard_asignacion</div>
+                  </div>
+                  <div class="eT-col"><span class="eT-badge eT-pk">PK</span>id</div>
+                  <div class="eT-col"><span class="eT-badge eT-fk">FK</span>modulo_id</div>
+                  <div class="eT-col"><span class="eT-badge eT-fk">FK</span>colaborador_id</div>
+                  <div class="eT-col"><span class="eT-badge eT-fk">FK</span>rol_id</div>
+                </div>
+
+                <div class="eT" id="eT-modulo" style="left:410px;top:400px">
+                  <div class="eT-head">
+                    <div class="eT-name">Modulo</div>
+                    <div class="eT-db">dashboard_modulo</div>
+                  </div>
+                  <div class="eT-col"><span class="eT-badge eT-pk">PK</span>id</div>
+                  <div class="eT-col"><span class="eT-badge eT-fk">FK</span>proyecto_id</div>
+                  <div class="eT-col">nombre</div>
+                  <div class="eT-col">referente</div>
+                </div>
+
+                <div class="eT" id="eT-proyecto" style="left:615px;top:400px">
+                  <div class="eT-head">
+                    <div class="eT-name">Proyecto</div>
+                    <div class="eT-db">dashboard_proyecto</div>
+                  </div>
+                  <div class="eT-col"><span class="eT-badge eT-pk">PK</span>id</div>
+                  <div class="eT-col">nombre</div>
+                </div>
+
+              </div><!-- /erd-wrap -->
+            </div><!-- /erd-body -->
+
+            <div class="erd-leyenda">
+              <span class="erd-leyenda-item">
+                <span class="eT-badge eT-pk">PK</span> Llave primaria
+              </span>
+              <span class="erd-leyenda-item">
+                <span class="eT-badge eT-fk">FK</span> Llave foránea (obligatoria)
+              </span>
+              <span class="erd-leyenda-item">
+                <span class="eT-badge eT-fk-opt">FK?</span> Llave foránea (opcional / NULL)
+              </span>
+              <span class="erd-leyenda-item" style="margin-left:8px;">
+                <svg width="28" height="10" viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-ley)"/><defs><marker id="arrow-ley" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#7c3aed"/></marker></defs></svg>
+                Relación FK
+              </span>
+              <span class="erd-leyenda-item">
+                <svg width="28" height="10" viewBox="0 0 28 10"><line x1="0" y1="5" x2="28" y2="5" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-ley-opt)"/><defs><marker id="arrow-ley-opt" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#22c55e"/></marker></defs></svg>
+                Relación opcional
+              </span>
+            </div>
+          </div><!-- /erd-card -->
+        </div><!-- /panel-erd -->
+
+        <!-- ── TAB: EDITOR SQL ────────────────────────── -->
+        <div id="panel-sql" class="sql-tab-panel">
+
+          <div class="sql-editor-card">
+            <div class="sql-editor-header">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
+                <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
               </svg>
-              CSV
-            </button>
+              <span>Editor SQL</span>
+              <span class="sql-hint">Solo consultas SELECT &mdash; máx. 500 filas</span>
+            </div>
+            <textarea
+              id="sqlInput"
+              class="sql-textarea"
+              placeholder="SELECT * FROM dashboard_colaborador LIMIT 10;"
+              spellcheck="false"
+            ></textarea>
+            <div class="sql-actions">
+              <button id="btnEjecutar" class="btn-ejecutar">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Ejecutar
+              </button>
+              <button id="btnLimpiar" class="btn-limpiar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
+                  <path d="M9 6V4h6v2"/>
+                </svg>
+                Limpiar
+              </button>
+            </div>
           </div>
-          <div class="sql-tabla-wrap">
-            <table id="sqlTabla" class="sql-tabla">
-              <thead id="sqlThead"></thead>
-              <tbody id="sqlTbody"></tbody>
-            </table>
+
+          <!-- Resultados -->
+          <div id="sqlResultados" class="sql-resultados oculto">
+            <div class="sql-resultado-header">
+              <div class="sql-resultado-titulo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/>
+                </svg>
+                Resultados
+              </div>
+              <span id="sqlConteo" class="sql-conteo"></span>
+              <button id="btnExportar" class="btn-exportar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                CSV
+              </button>
+            </div>
+            <div class="sql-tabla-wrap">
+              <table id="sqlTabla" class="sql-tabla">
+                <thead id="sqlThead"></thead>
+                <tbody id="sqlTbody"></tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
-        <!-- Error -->
-        <div id="sqlError" class="sql-error oculto">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <span id="sqlErrorMsg"></span>
-        </div>
+          <!-- Error -->
+          <div id="sqlError" class="sql-error oculto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="sqlErrorMsg"></span>
+          </div>
 
-        <!-- Vacío inicial -->
-        <div id="sqlVacio" class="sql-vacio">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-          </svg>
-          <p>Escribe una consulta SQL y presiona <strong>Ejecutar</strong></p>
-          <p class="sql-vacio-sub">Puedes hacer clic en el nombre de una tabla para insertar una consulta de ejemplo</p>
-        </div>
+          <!-- Vacío inicial -->
+          <div id="sqlVacio" class="sql-vacio">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+            <p>Escribe una consulta SQL y presiona <strong>Ejecutar</strong></p>
+            <p class="sql-vacio-sub">Ctrl+Enter ejecuta · Clic en una tabla del sidebar inserta la consulta</p>
+          </div>
 
-      </div>
-    </div>
+        </div><!-- /panel-sql -->
+
+      </div><!-- /sql-main -->
+    </div><!-- /sql-layout -->
   </main>
 {% endblock %}
 

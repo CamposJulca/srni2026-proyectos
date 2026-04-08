@@ -1,0 +1,63 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Resumen General{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{% static 'dashboard/css/actividades.css' %}">
+<link rel="stylesheet" href="{% static 'dashboard/css/semana.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="page-main">
+  <div class="act-page">
+
+    <div class="act-toolbar">
+      <div class="act-toolbar-left">
+        <h2 class="act-titulo">Resumen General</h2>
+        <span class="act-subtitulo">Instrumentalización SRNI &middot; 2026</span>
+      </div>
+      <div class="act-toolbar-right">
+        <a href="/actividades/semana/" class="act-btn-secundario" style="display:flex;align-items:center;gap:6px;text-decoration:none;height:36px;padding:0 14px;white-space:nowrap">Vista Semanal</a>
+        <a href="/actividades/" class="act-btn-secundario" style="display:flex;align-items:center;gap:6px;text-decoration:none;height:36px;padding:0 14px;white-space:nowrap">Ver Gantt</a>
+      </div>
+    </div>
+
+    <div class="sem-nav">
+      <button class="sem-nav-btn" id="btn-sem-prev" title="Semana anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="sem-nav-center">
+        <select id="sel-semana" class="sem-select">
+          {% for s in semanas %}
+          <option value="{{ s }}" {% if s == semana_default %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+        <div class="sem-fechas" id="sem-fechas">&mdash;</div>
+      </div>
+      <button class="sem-nav-btn" id="btn-sem-next" title="Semana siguiente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <button class="sem-btn-hoy" id="btn-hoy">Semana actual</button>
+    </div>
+
+    <div style="display:flex;justify-content:center;align-items:center;padding:60px 20px">
+      <div style="text-align:center">
+        <div id="res-total" style="font-size:5rem;font-weight:800;line-height:1;color:var(--texto);letter-spacing:-3px">{{ total_inicial }}</div>
+        <div style="font-size:0.85rem;color:var(--texto-s);text-transform:uppercase;letter-spacing:1px;margin-top:10px">Compromisos esta semana</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var SEMANAS_ORDENADAS     = {{ semanas|safe }};
+var SEMANA_ACTUAL_DEFAULT = "{{ semana_actual }}";
+var SEMANA_DEFAULT        = "{{ semana_default }}";
+var SEMANA_FECHAS         = {{ semana_fechas }};
+</script>
+<script src="{% static 'dashboard/js/resumen.js' %}"></script>
+{% endblock %}

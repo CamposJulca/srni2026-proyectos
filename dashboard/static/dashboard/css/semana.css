@@ -1,0 +1,322 @@
+/* ============================================================
+   VISTA SEMANAL
+   ============================================================ */
+
+/* ---- Navegador de semanas ---- */
+.sem-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--blanco);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: 14px 20px;
+  margin-bottom: 16px;
+}
+
+.sem-nav-btn {
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--gris-2);
+  border-radius: 8px;
+  background: var(--gris-1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--trans);
+  flex-shrink: 0;
+}
+.sem-nav-btn svg { width: 18px; height: 18px; }
+.sem-nav-btn:hover { background: var(--azul); border-color: var(--azul); color: #fff; }
+.sem-nav-btn:hover svg { stroke: #fff; }
+.sem-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.sem-nav-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.sem-select {
+  height: 40px;
+  padding: 0 14px;
+  border: 2px solid var(--azul);
+  border-radius: var(--radio-sm);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--azul);
+  background: var(--azul-s);
+  cursor: pointer;
+  outline: none;
+  min-width: 160px;
+  text-align: center;
+}
+
+.sem-fechas {
+  font-size: 0.8rem;
+  color: var(--texto-s);
+}
+
+.sem-btn-hoy {
+  padding: 8px 16px;
+  background: var(--azul);
+  color: #fff;
+  border: none;
+  border-radius: var(--radio-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--trans);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sem-btn-hoy:hover { background: #002070; }
+
+/* ---- Stats ---- */
+.sem-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.sem-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--blanco);
+  border-radius: var(--radio-sm);
+  box-shadow: var(--sombra);
+  min-width: 100px;
+}
+.sem-stat span { font-size: 1.6rem; font-weight: 700; color: var(--azul); }
+.sem-stat small { font-size: 0.72rem; color: var(--texto-s); margin-top: 2px; text-align: center; }
+.sem-stat-completada span { color: var(--verde); }
+.sem-stat-pendiente span { color: var(--texto-s); }
+
+/* ---- Loading / vacío ---- */
+.sem-loading, .sem-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px;
+  color: var(--gris-3);
+}
+.sem-vacio svg { width: 44px; height: 44px; }
+.sem-vacio p, .sem-loading p { font-size: 0.9rem; }
+
+.sem-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--gris-2);
+  border-top-color: var(--azul);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- Grid de tarjetas ---- */
+.sem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+/* ---- Tarjeta de colaborador ---- */
+.sem-card {
+  background: var(--blanco);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.sem-card:hover { box-shadow: var(--sombra-h); }
+
+.sem-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--gris-2);
+}
+
+.sem-card-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sem-card-nombre {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--azul);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sem-card-badge {
+  background: var(--azul-s);
+  color: var(--azul);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+/* Lista de actividades en la tarjeta */
+.sem-card-body { padding: 8px 0; }
+
+.sem-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--gris-2);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.sem-item:last-child { border-bottom: none; }
+.sem-item:hover { background: var(--gris-1); }
+
+.sem-item-estado {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.estado-dot-pendiente  { background: var(--gris-3); }
+.estado-dot-en_curso   { background: #0891b2; }
+.estado-dot-completada { background: var(--verde); }
+.estado-dot-bloqueada  { background: var(--rojo); }
+
+.sem-item-info { flex: 1; min-width: 0; }
+
+.sem-item-desc {
+  font-size: 0.82rem;
+  color: var(--texto);
+  line-height: 1.4;
+  margin-bottom: 3px;
+}
+.sem-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sem-item-oblig {
+  font-size: 0.72rem;
+  color: var(--texto-s);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+.sem-item-semnum {
+  font-size: 0.68rem;
+  color: var(--azul);
+  background: var(--azul-s);
+  padding: 1px 6px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Barra de progreso compacta */
+.sem-item-prog {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  width: 100%;
+}
+.sem-item-prog-bg {
+  flex: 1;
+  height: 4px;
+  background: var(--gris-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.sem-item-prog-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+.sem-item-prog-pct {
+  font-size: 0.68rem;
+  color: var(--texto-s);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* Acción rápida (marcar como completada) */
+.sem-item-check {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1.5px solid var(--gris-2);
+  background: var(--gris-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--trans);
+  color: var(--gris-3);
+}
+.sem-item-check:hover { border-color: var(--verde); color: var(--verde); background: var(--verde-s); }
+.sem-item-check.completada { background: var(--verde-s); border-color: var(--verde); color: var(--verde); }
+.sem-item-check svg { width: 14px; height: 14px; }
+
+/* ---- Resumen por persona (footer de tarjeta) ---- */
+.sem-card-footer {
+  padding: 8px 16px;
+  border-top: 2px solid var(--gris-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--gris-1);
+}
+.sem-card-prog-total {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.sem-card-prog-bg {
+  flex: 1;
+  height: 6px;
+  background: var(--gris-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.sem-card-prog-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s;
+}
+.sem-card-pct {
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 36px;
+  text-align: right;
+}
+.sem-card-completadas {
+  font-size: 0.72rem;
+  color: var(--texto-s);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .sem-nav { flex-wrap: wrap; }
+  .sem-grid { grid-template-columns: 1fr; }
+}

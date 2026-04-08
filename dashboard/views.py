@@ -12,12 +12,14 @@ import re
 import unicodedata
 
 from .models import (
+    Procedimiento,
     Proyecto,
     Modulo,
-    Persona,
+    Colaborador,
     Rol,
     Asignacion,
-    PlanAccion
+    Obligacion,
+    Actividad,
 )
 
 
@@ -87,26 +89,25 @@ def gerencial_view(request):
 def gerencial_data(request):
     hoy = date.today()
 
-    total       = Persona.objects.count()
-    masa        = Persona.objects.filter(honorarios__isnull=False).aggregate(t=Sum('honorarios'))['t'] or 0
-    vigentes    = Persona.objects.filter(fecha_fin__isnull=False, fecha_fin__gte=hoy).count()
-    vencidos    = Persona.objects.filter(fecha_fin__isnull=False, fecha_fin__lt=hoy).count()
-    sin_fecha   = Persona.objects.filter(fecha_fin__isnull=True).count()
+    total       = Colaborador.objects.count()
+    masa        = Colaborador.objects.filter(honorarios__isnull=False).aggregate(t=Sum('honorarios'))['t'] or 0
+    vigentes    = Colaborador.objects.filter(fecha_fin__isnull=False, fecha_fin__gte=hoy).count()
+    vencidos    = Colaborador.objects.filter(fecha_fin__isnull=False, fecha_fin__lt=hoy).count()
+    sin_fecha   = Colaborador.objects.filter(fecha_fin__isnull=True).count()
 
-    por_proc = list(
-        Persona.objects.values('procedimiento')
+    por_proc_qs = list(
+        Colaborador.objects
+        .values('procedimiento__nombre')
         .annotate(personas=Count('id'), masa=Sum('honorarios'))
         .order_by('-personas')
     )
-    # convertir Decimal a float para JSON
-    for p in por_proc:
-        p['masa'] = float(p['masa'] or 0)
-        p['procedimiento'] = p['procedimiento'] or 'Sin clasificar'
-
-    compromisos_mes = list(
-        PlanAccion.objects.values('mes')
-        .annotate(total=Count('id'))
-    )
+    por_proc = []
+    for p in por_proc_qs:
+        por_proc.append({
+            'procedimiento': p['procedimiento__nombre'] or 'Sin clasificar',
+            'personas': p['personas'],
+            'masa': float(p['masa'] or 0),
+        })
 
     return JsonResponse({
         'kpis': {
@@ -117,7 +118,7 @@ def gerencial_data(request):
             'sin_fecha': sin_fecha,
         },
         'por_procedimiento': por_proc,
-        'compromisos_mes':   compromisos_mes,
+        'compromisos_mes':   [],
     })
 
 
@@ -127,9 +128,11 @@ def dashboard(request):
     procedimiento = request.GET.get("procedimiento", "INSTRUMENTALIZACIÓN")
 
     if procedimiento:
-        personas = Persona.objects.filter(procedimiento=procedimiento).order_by("nombre")
+        colaboradores = Colaborador.objects.filter(
+            procedimiento__nombre=procedimiento
+        ).order_by("nombre")
     else:
-        personas = Persona.objects.all().order_by("nombre")
+        colaboradores = Colaborador.objects.all().order_by("nombre")
 
     roles = Rol.objects.all()
     proyectos = Proyecto.objects.all()
@@ -138,7 +141,7 @@ def dashboard(request):
         request,
         "dashboard/dashboard_view.html",
         {
-            "personas": personas,
+            "personas": colaboradores,
             "roles": roles,
             "proyectos": proyectos,
             "procedimientos": PROCEDIMIENTOS,
@@ -156,14 +159,14 @@ def dashboard_data(request):
     procedimiento = request.GET.get("procedimiento")
 
     asignaciones = Asignacion.objects.select_related(
-        "persona",
+        "colaborador",
         "rol",
         "modulo",
         "modulo__proyecto"
     )
 
     if persona:
-        asignaciones = asignaciones.filter(persona_id=persona)
+        asignaciones = asignaciones.filter(colaborador_id=persona)
 
     if rol:
         asignaciones = asignaciones.filter(rol_id=rol)
@@ -175,33 +178,36 @@ def dashboard_data(request):
     # KPIs
     # ==============================
 
-    personas_qs = Persona.objects.filter(procedimiento=procedimiento) if procedimiento else Persona.objects.all()
+    colaboradores_qs = (
+        Colaborador.objects.filter(procedimiento__nombre=procedimiento)
+        if procedimiento else Colaborador.objects.all()
+    )
 
     kpis = {
         "proyectos": Proyecto.objects.count(),
         "modulos": Modulo.objects.count(),
-        "personas": personas_qs.count(),
+        "personas": colaboradores_qs.count(),
         "asignaciones": asignaciones.count(),
     }
 
     # ==============================
-    # Proyectos por persona
+    # Proyectos por colaborador
     # ==============================
 
     proyectos_persona = (
         asignaciones
-        .values("persona__nombre")
+        .values("colaborador__nombre")
         .annotate(total=Count("modulo__proyecto", distinct=True))
     )
 
     # ==============================
-    # Roles por persona
+    # Roles por colaborador
     # ==============================
 
     roles_persona = (
         asignaciones
         .values("rol__nombre")
-        .annotate(total=Count("persona", distinct=True))
+        .annotate(total=Count("colaborador", distinct=True))
     )
 
     # ==============================
@@ -217,27 +223,12 @@ def dashboard_data(request):
         .annotate(total=Count("id", distinct=True))
     )
 
-    # ==============================
-    # Compromisos por mes
-    # ==============================
-
-    compromisos_query = PlanAccion.objects.select_related("modulo", "modulo__proyecto")
-
-    if proyecto:
-        compromisos_query = compromisos_query.filter(modulo__proyecto_id=proyecto)
-
-    compromisos_mes = (
-        compromisos_query
-        .values("mes")
-        .annotate(total=Count("id"))
-    )
-
     data = {
         "kpis": kpis,
         "proyectos_persona": list(proyectos_persona),
         "roles_persona": list(roles_persona),
         "modulos_proyecto": list(modulos_proyecto),
-        "compromisos_mes": list(compromisos_mes),
+        "compromisos_mes": [],
     }
 
     return JsonResponse(data)
@@ -289,33 +280,80 @@ def sql_query(request):
 # ============================================================
 
 def _opciones_fk(modelo, campo_display="nombre"):
-    return [{"id": o.pk, "label": str(getattr(o, campo_display, o.pk))}
-            for o in modelo.objects.all().order_by(campo_display)]
+    try:
+        qs = modelo.objects.all().order_by(campo_display)
+        return [{"id": o.pk, "label": str(getattr(o, campo_display, None) or o)} for o in qs]
+    except Exception:
+        return [{"id": o.pk, "label": str(o)} for o in modelo.objects.all()]
 
 
 TABLA_META = {
-    "persona": {
-        "modelo": Persona,
-        "label": "Personas",
-        "icono": "personas",
-        "buscar_en": ["nombre", "cedula", "procedimiento"],
+    "colaborador": {
+        "modelo": Colaborador,
+        "label": "Colaboradores",
+        "buscar_en": ["nombre", "cedula"],
+        "filtro_colaborador": False,
         "campos": [
-            {"name": "nombre",        "label": "Nombre completo", "type": "text",     "required": True},
-            {"name": "cedula",        "label": "Cédula",          "type": "text"},
-            {"name": "procedimiento", "label": "Procedimiento",   "type": "select",   "opciones_fijas": None},
-            {"name": "fecha_inicio",  "label": "Fecha inicio",    "type": "date"},
-            {"name": "fecha_fin",     "label": "Fecha fin",       "type": "date"},
-            {"name": "honorarios",    "label": "Honorarios",      "type": "number"},
-            {"name": "objeto",        "label": "Objeto contrato", "type": "textarea"},
-            {"name": "obligaciones",  "label": "Obligaciones",    "type": "textarea"},
+            {"name": "nombre",           "label": "Nombre completo", "type": "text",     "required": True},
+            {"name": "cedula",           "label": "Cédula",          "type": "text"},
+            {"name": "procedimiento_id", "label": "Procedimiento",   "type": "fk",       "fk_modelo": "Procedimiento"},
+            {"name": "fecha_inicio",     "label": "Fecha inicio",    "type": "date"},
+            {"name": "fecha_fin",        "label": "Fecha fin",       "type": "date"},
+            {"name": "honorarios",       "label": "Honorarios",      "type": "number"},
+            {"name": "objeto",           "label": "Objeto contrato", "type": "textarea"},
         ],
-        "columnas_lista": ["nombre", "cedula", "procedimiento", "fecha_inicio", "fecha_fin", "honorarios"],
+        "columnas_lista": ["nombre", "cedula", "procedimiento__nombre", "fecha_inicio", "fecha_fin", "honorarios"],
+    },
+    "obligacion": {
+        "modelo": Obligacion,
+        "label": "Obligaciones",
+        "buscar_en": ["descripcion"],
+        "filtro_colaborador": True,
+        "campos": [
+            {"name": "colaborador_id", "label": "Colaborador", "type": "fk",      "required": True, "fk_modelo": "Colaborador"},
+            {"name": "descripcion",    "label": "Descripción", "type": "textarea","required": True},
+        ],
+        "columnas_lista": ["colaborador__nombre", "descripcion"],
+    },
+    "actividad": {
+        "modelo": Actividad,
+        "label": "Actividades",
+        "buscar_en": ["descripcion", "actividad_id"],
+        "filtro_colaborador": True,
+        "campos": [
+            {"name": "obligacion_id",  "label": "Obligación",   "type": "fk",      "required": True, "fk_modelo": "Obligacion"},
+            {"name": "actividad_id",   "label": "ID actividad", "type": "text"},
+            {"name": "descripcion",    "label": "Descripción",  "type": "textarea","required": True},
+            {"name": "fecha_inicio",   "label": "Fecha inicio", "type": "date"},
+            {"name": "fecha_fin",      "label": "Fecha fin",    "type": "date"},
+            {"name": "progreso",       "label": "Progreso (%)", "type": "number"},
+            {"name": "estado",         "label": "Estado",       "type": "choice",
+             "opciones_fijas": [
+                {"id": "pendiente",   "label": "Pendiente"},
+                {"id": "en_curso",    "label": "En curso"},
+                {"id": "completada",  "label": "Completada"},
+             ]},
+            {"name": "orden",          "label": "Orden",        "type": "number"},
+        ],
+        "columnas_lista": ["obligacion__colaborador__nombre", "actividad_id", "descripcion", "estado", "progreso"],
+    },
+    "asignacion": {
+        "modelo": Asignacion,
+        "label": "Asignaciones",
+        "buscar_en": [],
+        "filtro_colaborador": False,
+        "campos": [
+            {"name": "colaborador_id", "label": "Colaborador", "type": "fk", "required": True, "fk_modelo": "Colaborador"},
+            {"name": "rol_id",         "label": "Rol",         "type": "fk", "required": True, "fk_modelo": "Rol"},
+            {"name": "modulo_id",      "label": "Módulo",      "type": "fk", "required": True, "fk_modelo": "Modulo"},
+        ],
+        "columnas_lista": ["colaborador__nombre", "rol__nombre", "modulo__nombre", "modulo__proyecto__nombre"],
     },
     "modulo": {
         "modelo": Modulo,
         "label": "Módulos",
-        "icono": "modulos",
         "buscar_en": ["nombre", "referente"],
+        "filtro_colaborador": False,
         "campos": [
             {"name": "proyecto_id", "label": "Proyecto",  "type": "fk",  "required": True, "fk_modelo": "Proyecto"},
             {"name": "nombre",      "label": "Nombre",    "type": "text", "required": True},
@@ -326,47 +364,23 @@ TABLA_META = {
     "rol": {
         "modelo": Rol,
         "label": "Roles",
-        "icono": "roles",
         "buscar_en": ["nombre"],
+        "filtro_colaborador": False,
         "campos": [
             {"name": "nombre", "label": "Nombre", "type": "text", "required": True},
         ],
         "columnas_lista": ["nombre"],
     },
-    "asignacion": {
-        "modelo": Asignacion,
-        "label": "Asignaciones",
-        "icono": "asignaciones",
-        "buscar_en": [],
-        "campos": [
-            {"name": "persona_id", "label": "Persona", "type": "fk", "required": True, "fk_modelo": "Persona"},
-            {"name": "rol_id",     "label": "Rol",     "type": "fk", "required": True, "fk_modelo": "Rol"},
-            {"name": "modulo_id",  "label": "Módulo",  "type": "fk", "required": True, "fk_modelo": "Modulo"},
-        ],
-        "columnas_lista": ["persona__nombre", "rol__nombre", "modulo__nombre", "modulo__proyecto__nombre"],
-    },
-    "planaccion": {
-        "modelo": PlanAccion,
-        "label": "Planes de acción",
-        "icono": "planaccion",
-        "buscar_en": ["compromiso", "mes"],
-        "campos": [
-            {"name": "modulo_id",   "label": "Módulo",      "type": "fk",      "required": True, "fk_modelo": "Modulo"},
-            {"name": "mes",         "label": "Mes",         "type": "select",  "opciones_fijas": [
-                "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-                "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
-            ]},
-            {"name": "compromiso",  "label": "Compromiso",  "type": "textarea","required": True},
-        ],
-        "columnas_lista": ["modulo__nombre", "modulo__proyecto__nombre", "mes", "compromiso"],
-    },
 }
 
 FK_MODELOS = {
-    "Persona": Persona,
-    "Proyecto": Proyecto,
-    "Modulo":   Modulo,
-    "Rol":      Rol,
+    "Procedimiento": Procedimiento,
+    "Colaborador":   Colaborador,
+    "Proyecto":      Proyecto,
+    "Modulo":        Modulo,
+    "Rol":           Rol,
+    "Obligacion":    Obligacion,
+    "Actividad":     Actividad,
 }
 
 
@@ -398,14 +412,15 @@ def crud_meta(request):
             if campo["type"] == "fk":
                 fk_m = FK_MODELOS.get(campo.get("fk_modelo"))
                 campo["opciones"] = _opciones_fk(fk_m) if fk_m else []
-            elif campo["name"] == "procedimiento":
-                campo["opciones_fijas"] = PROCEDIMIENTOS
+            elif campo["type"] == "choice":
+                campo["opciones"] = campo.get("opciones_fijas", [])
             campos.append(campo)
         resultado[key] = {
-            "label":    cfg["label"],
-            "campos":   campos,
-            "columnas": cfg["columnas_lista"],
-            "total":    cfg["modelo"].objects.count(),
+            "label":              cfg["label"],
+            "campos":             campos,
+            "columnas":           cfg["columnas_lista"],
+            "filtro_colaborador": cfg.get("filtro_colaborador", False),
+            "total":              cfg["modelo"].objects.count(),
         }
     return JsonResponse(resultado)
 
@@ -417,10 +432,18 @@ def crud_lista(request, tabla):
 
     qs = cfg["modelo"].objects.all()
 
-    # Filtro por procedimiento (solo tabla persona)
+    # Filtro por procedimiento (colaborador)
     proc = request.GET.get("proc", "").strip()
-    if proc and tabla == "persona":
-        qs = qs.filter(procedimiento=proc)
+    if proc and tabla == "colaborador":
+        qs = qs.filter(procedimiento__nombre=proc)
+
+    # Filtro por colaborador (obligacion / actividad)
+    colab_id = request.GET.get("colaborador", "").strip()
+    if colab_id:
+        if tabla == "obligacion":
+            qs = qs.filter(colaborador_id=colab_id)
+        elif tabla == "actividad":
+            qs = qs.filter(obligacion__colaborador_id=colab_id)
 
     # Búsqueda
     q = request.GET.get("q", "").strip()
@@ -434,9 +457,13 @@ def crud_lista(request, tabla):
     if tabla == "modulo":
         qs = qs.select_related("proyecto")
     elif tabla == "asignacion":
-        qs = qs.select_related("persona", "rol", "modulo", "modulo__proyecto")
-    elif tabla == "planaccion":
-        qs = qs.select_related("modulo", "modulo__proyecto")
+        qs = qs.select_related("colaborador", "rol", "modulo", "modulo__proyecto")
+    elif tabla == "colaborador":
+        qs = qs.select_related("procedimiento")
+    elif tabla == "obligacion":
+        qs = qs.select_related("colaborador")
+    elif tabla == "actividad":
+        qs = qs.select_related("obligacion", "obligacion__colaborador")
 
     total = qs.count()
     page  = int(request.GET.get("page", 1))
@@ -530,7 +557,7 @@ def personas_por_rol(request):
     proyecto_id = request.GET.get("proyecto", "")
 
     qs = Asignacion.objects.select_related(
-        "persona", "rol", "modulo", "modulo__proyecto"
+        "colaborador", "rol", "modulo", "modulo__proyecto"
     )
 
     if rol_nombre:
@@ -540,11 +567,11 @@ def personas_por_rol(request):
 
     data = [
         {
-            "persona": a.persona.nombre,
-            "modulo":  a.modulo.nombre,
+            "persona":  a.colaborador.nombre,
+            "modulo":   a.modulo.nombre,
             "proyecto": a.modulo.proyecto.nombre,
         }
-        for a in qs.order_by("persona__nombre")
+        for a in qs.order_by("colaborador__nombre")
     ]
 
     return JsonResponse({"asignaciones": data})
@@ -582,14 +609,13 @@ def carga(request):
         if campo not in headers:
             return JsonResponse({"error": f"No se encontró la columna '{campo}'."}, status=400)
 
-    # Construir mapa de personas existentes en BD (normalizado → objeto)
-    personas_bd = {_normalizar(p.nombre): p for p in Persona.objects.all()}
+    # Construir mapa de colaboradores existentes en BD (normalizado → objeto)
+    colaboradores_bd = {_normalizar(c.nombre): c for c in Colaborador.objects.all()}
 
     creadas, actualizadas, omitidas = [], [], []
 
     for row in range(2, hoja.max_row + 1):
         dep = hoja.cell(row, headers.get("DEPENDENCIA ASOCIADA", 0)).value if "DEPENDENCIA ASOCIADA" in headers else None
-        # Si hay columna de dependencia, filtrar solo SRNI; si no, importar todos
         if dep and "RED NACIONAL" not in str(dep).upper():
             continue
 
@@ -607,7 +633,7 @@ def carga(request):
         fecha_fin = hoja.cell(row, headers["FECHA TERMINACION CONTRATO"]).value if "FECHA TERMINACION CONTRATO" in headers else None
         honorarios = hoja.cell(row, headers["VALOR HONORARIOS MENSUALES ESTIMADOS"]).value if "VALOR HONORARIOS MENSUALES ESTIMADOS" in headers else None
         objeto = hoja.cell(row, headers["OBJETO PAA"]).value if "OBJETO PAA" in headers else None
-        obligaciones = hoja.cell(row, headers["OBLIGACIONES"]).value if "OBLIGACIONES" in headers else None
+        proc_texto = hoja.cell(row, headers["PROCEDIMIENTO"]).value if "PROCEDIMIENTO" in headers else None
 
         # Normalizar fechas
         if hasattr(fecha_inicio, 'date'):
@@ -615,25 +641,31 @@ def carga(request):
         if hasattr(fecha_fin, 'date'):
             fecha_fin = fecha_fin.date()
 
+        # Resolver FK de procedimiento
+        procedimiento_obj = None
+        if proc_texto:
+            proc_texto = str(proc_texto).strip().upper()
+            procedimiento_obj, _ = Procedimiento.objects.get_or_create(nombre=proc_texto)
+
         campos = {
-            "cedula": str(cedula) if cedula else None,
+            "cedula":       str(cedula) if cedula else None,
             "fecha_inicio": fecha_inicio,
-            "fecha_fin": fecha_fin,
-            "honorarios": honorarios,
-            "objeto": str(objeto).strip() if objeto else None,
-            "obligaciones": str(obligaciones).strip() if obligaciones else None,
+            "fecha_fin":    fecha_fin,
+            "honorarios":   honorarios,
+            "objeto":       str(objeto).strip() if objeto else None,
+            "procedimiento": procedimiento_obj,
         }
 
-        if norm in personas_bd:
-            persona = personas_bd[norm]
+        if norm in colaboradores_bd:
+            colaborador = colaboradores_bd[norm]
             for k, v in campos.items():
                 if v is not None:
-                    setattr(persona, k, v)
-            persona.save()
-            actualizadas.append(persona.nombre)
+                    setattr(colaborador, k, v)
+            colaborador.save()
+            actualizadas.append(colaborador.nombre)
         else:
-            persona = Persona.objects.create(nombre=nombre_completo, **{k: v for k, v in campos.items()})
-            personas_bd[norm] = persona
+            colaborador = Colaborador.objects.create(nombre=nombre_completo, **{k: v for k, v in campos.items()})
+            colaboradores_bd[norm] = colaborador
             creadas.append(nombre_completo)
 
     return JsonResponse({
@@ -643,3 +675,374 @@ def carga(request):
         "total_creadas": len(creadas),
         "total_actualizadas": len(actualizadas),
     })
+
+# ============================================================
+#  MÓDULO ACTIVIDADES — CRONOGRAMA GANTT
+# ============================================================
+
+# Colaboradores sin archivo .md propio (no están en el DB aún)
+COLABORADORES_SIN_CRONOGRAMA = [
+    "Cristian Alejandro Neira López",
+    "Edwin Alonso Villalobos Muñoz",
+    "Jorge Andrés González Cetina",
+    "Jorge Tomás Barreiro",
+    "Martha Carolina Flórez Pérez",
+    "Paola Andrea Arango Ferro",
+    "Yovan Alirio Solano Flórez",
+    "Cristhiam Daniel Campos Julca",
+]
+
+
+@login_required
+def actividades_view(request):
+    colaboradores = list(
+        Actividad.objects
+        .values_list('obligacion__colaborador__nombre', flat=True)
+        .distinct()
+        .order_by('obligacion__colaborador__nombre')
+    )
+    # Añadir colaboradores sin cronograma cargado aún
+    for c in COLABORADORES_SIN_CRONOGRAMA:
+        if c not in colaboradores:
+            colaboradores.append(c)
+    colaboradores.sort()
+
+    obligaciones = list(
+        Actividad.objects
+        .values_list('obligacion__descripcion', flat=True)
+        .distinct()
+        .order_by('obligacion__descripcion')
+    )
+    return render(request, 'dashboard/actividades.html', {
+        'modulo_activo': 'actividades',
+        'colaboradores': colaboradores,
+        'obligaciones': obligaciones,
+    })
+
+
+@login_required
+def actividades_data(request):
+    qs = Actividad.objects.select_related('obligacion__colaborador', 'proyecto').all()
+    colaborador = request.GET.get('colaborador', '').strip()
+    estado = request.GET.get('estado', '').strip()
+    obligacion = request.GET.get('obligacion', '').strip()
+
+    if colaborador:
+        qs = qs.filter(obligacion__colaborador__nombre=colaborador)
+    if estado:
+        qs = qs.filter(estado=estado)
+    if obligacion:
+        qs = qs.filter(obligacion__descripcion=obligacion)
+
+    hoy = date.today()
+    tasks = []
+    for a in qs:
+        # Auto-detectar estado visual si está pendiente y la fecha ya pasó o está en curso
+        estado_visual = a.estado
+        if a.estado == 'pendiente':
+            if a.fecha_fin < hoy:
+                estado_visual = 'vencida'
+            elif a.fecha_inicio <= hoy <= a.fecha_fin:
+                estado_visual = 'en_curso'
+
+        tasks.append({
+            'id':           a.pk,
+            'colaborador':  a.obligacion.colaborador.nombre,
+            'obligacion':   a.obligacion.descripcion,
+            'actividad_id': a.actividad_id,
+            'descripcion':  a.descripcion,
+            'fecha_inicio': a.fecha_inicio.isoformat(),
+            'fecha_fin':    a.fecha_fin.isoformat(),
+            'progreso':     a.progreso,
+            'estado':       a.estado,
+            'estado_visual': estado_visual,
+            'orden':        a.orden,
+        })
+
+    return JsonResponse({'tasks': tasks})
+
+
+@login_required
+@require_POST
+def actividad_crear(request):
+    try:
+        data = json.loads(request.body)
+
+        nombre_colab = data.get('colaborador', '').strip()
+        desc_oblig   = data.get('obligacion', '').strip()
+
+        if not nombre_colab:
+            return JsonResponse({'ok': False, 'error': 'colaborador requerido'}, status=400)
+
+        colaborador_obj = Colaborador.objects.filter(nombre=nombre_colab).first()
+        if not colaborador_obj:
+            return JsonResponse({'ok': False, 'error': f'Colaborador "{nombre_colab}" no encontrado'}, status=400)
+
+        obligacion_obj, _ = Obligacion.objects.get_or_create(
+            colaborador=colaborador_obj,
+            descripcion=desc_oblig,
+        )
+
+        proyecto_id = data.get('proyecto_id')
+        proyecto_obj = Proyecto.objects.filter(pk=proyecto_id).first() if proyecto_id else None
+
+        a = Actividad.objects.create(
+            obligacion=obligacion_obj,
+            proyecto=proyecto_obj,
+            actividad_id=data.get('actividad_id', ''),
+            descripcion=data.get('descripcion', ''),
+            fecha_inicio=data['fecha_inicio'],
+            fecha_fin=data['fecha_fin'],
+            progreso=int(data.get('progreso', 0)),
+            estado=data.get('estado', 'pendiente'),
+        )
+        return JsonResponse({'ok': True, 'id': a.pk})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=400)
+
+
+@login_required
+def actividad_detalle(request, pk):
+    try:
+        a = Actividad.objects.select_related('obligacion__colaborador', 'proyecto').get(pk=pk)
+    except Actividad.DoesNotExist:
+        return JsonResponse({'error': 'No encontrada'}, status=404)
+
+    if request.method == 'GET':
+        return JsonResponse({
+            'id':           a.pk,
+            'colaborador':  a.obligacion.colaborador.nombre,
+            'obligacion':   a.obligacion.descripcion,
+            'actividad_id': a.actividad_id,
+            'descripcion':  a.descripcion,
+            'fecha_inicio': a.fecha_inicio.isoformat(),
+            'fecha_fin':    a.fecha_fin.isoformat(),
+            'progreso':     a.progreso,
+            'estado':       a.estado,
+        })
+
+    if request.method in ('PUT', 'PATCH'):
+        data = json.loads(request.body)
+        for field in ('actividad_id', 'descripcion', 'fecha_inicio', 'fecha_fin', 'estado'):
+            if field in data:
+                setattr(a, field, data[field])
+        if 'progreso' in data:
+            a.progreso = int(data['progreso'])
+        a.save()
+        return JsonResponse({'ok': True})
+
+    if request.method == 'DELETE':
+        a.delete()
+        return JsonResponse({'ok': True})
+
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+# ============================================================
+#  VISTA SEMANAL — compromisos por persona/semana
+# ============================================================
+
+# Orden cronológico de todas las semanas 2026
+SEMANAS_ORDENADAS = [
+    'ENE S1','ENE S2','ENE S3','ENE S4',
+    'FEB S1','FEB S2','FEB S3','FEB S4',
+    'MAR S1','MAR S2','MAR S3','MAR S4',
+    'ABR S1','ABR S2','ABR S3','ABR S4',
+    'MAY S1','MAY S2','MAY S3','MAY S4',
+    'JUN S1','JUN S2','JUN S3','JUN S4',
+    'JUL S1','JUL S2','JUL S3','JUL S4',
+    'AGO S1','AGO S2','AGO S3','AGO S4',
+    'SEP S1','SEP S2','SEP S3','SEP S4',
+    'OCT S1','OCT S2','OCT S3','OCT S4',
+    'NOV S1','NOV S2','NOV S3','NOV S4',
+    'DIC S1','DIC S2','DIC S3','DIC S4',
+]
+
+SEMANA_FECHAS = {
+    'ENE S1':('2026-01-05','2026-01-09'), 'ENE S2':('2026-01-12','2026-01-16'),
+    'ENE S3':('2026-01-19','2026-01-23'), 'ENE S4':('2026-01-26','2026-01-30'),
+    'FEB S1':('2026-02-02','2026-02-06'), 'FEB S2':('2026-02-09','2026-02-13'),
+    'FEB S3':('2026-02-16','2026-02-20'), 'FEB S4':('2026-02-23','2026-02-27'),
+    'MAR S1':('2026-03-02','2026-03-06'), 'MAR S2':('2026-03-09','2026-03-13'),
+    'MAR S3':('2026-03-16','2026-03-20'), 'MAR S4':('2026-03-23','2026-03-27'),
+    'ABR S1':('2026-04-06','2026-04-10'), 'ABR S2':('2026-04-13','2026-04-17'),
+    'ABR S3':('2026-04-20','2026-04-24'), 'ABR S4':('2026-04-27','2026-04-30'),
+    'MAY S1':('2026-05-04','2026-05-08'), 'MAY S2':('2026-05-11','2026-05-15'),
+    'MAY S3':('2026-05-18','2026-05-22'), 'MAY S4':('2026-05-25','2026-05-29'),
+    'JUN S1':('2026-06-01','2026-06-05'), 'JUN S2':('2026-06-08','2026-06-12'),
+    'JUN S3':('2026-06-15','2026-06-19'), 'JUN S4':('2026-06-22','2026-06-26'),
+    'JUL S1':('2026-07-06','2026-07-10'), 'JUL S2':('2026-07-13','2026-07-17'),
+    'JUL S3':('2026-07-20','2026-07-24'), 'JUL S4':('2026-07-27','2026-07-31'),
+    'AGO S1':('2026-08-03','2026-08-07'), 'AGO S2':('2026-08-10','2026-08-14'),
+    'AGO S3':('2026-08-17','2026-08-21'), 'AGO S4':('2026-08-24','2026-08-28'),
+    'SEP S1':('2026-09-07','2026-09-11'), 'SEP S2':('2026-09-14','2026-09-18'),
+    'SEP S3':('2026-09-21','2026-09-25'), 'SEP S4':('2026-09-28','2026-10-02'),
+    'OCT S1':('2026-10-05','2026-10-09'), 'OCT S2':('2026-10-12','2026-10-16'),
+    'OCT S3':('2026-10-19','2026-10-23'), 'OCT S4':('2026-10-26','2026-10-30'),
+    'NOV S1':('2026-11-02','2026-11-06'), 'NOV S2':('2026-11-09','2026-11-13'),
+    'NOV S3':('2026-11-16','2026-11-20'), 'NOV S4':('2026-11-23','2026-11-27'),
+    'DIC S1':('2026-11-30','2026-12-04'), 'DIC S2':('2026-12-07','2026-12-11'),
+    'DIC S3':('2026-12-14','2026-12-18'), 'DIC S4':('2026-12-21','2026-12-25'),
+}
+
+
+def _semana_actual():
+    """Devuelve la etiqueta de la semana del calendario que contiene hoy."""
+    hoy = date.today()
+    for sem, (ini, fin) in SEMANA_FECHAS.items():
+        if date.fromisoformat(ini) <= hoy <= date.fromisoformat(fin):
+            return sem
+    # Si está fuera del rango, buscar la más próxima
+    for sem in SEMANAS_ORDENADAS:
+        ini, _ = SEMANA_FECHAS[sem]
+        if date.fromisoformat(ini) >= hoy:
+            return sem
+    return SEMANAS_ORDENADAS[-1]
+
+
+@login_required
+def semana_view(request):
+    semana_actual = _semana_actual()
+    semana_param  = request.GET.get('semana', '').strip()
+    colab_param   = request.GET.get('colaborador', '').strip()
+    semana_inicial = semana_param if semana_param in SEMANAS_ORDENADAS else semana_actual
+    return render(request, 'dashboard/semana.html', {
+        'modulo_activo': 'actividades',
+        'semanas': SEMANAS_ORDENADAS,
+        'semana_actual': semana_actual,
+        'semana_inicial': semana_inicial,
+        'colaborador_inicial': colab_param,
+        'semana_fechas': json.dumps(SEMANA_FECHAS),
+        'colaboradores': sorted(set(
+            Actividad.objects.values_list('obligacion__colaborador__nombre', flat=True)
+        )),
+    })
+
+
+@login_required
+def semana_data(request):
+    semana = request.GET.get('semana', _semana_actual())
+    colaborador = request.GET.get('colaborador', '').strip()
+
+    base_qs = Actividad.objects.select_related(
+        'obligacion__colaborador'
+    ).order_by('obligacion__colaborador__nombre', 'orden')
+
+    if colaborador:
+        base_qs = base_qs.filter(obligacion__colaborador__nombre=colaborador)
+    qs = [a for a in base_qs if semana in (a.semanas_activas or [])]
+
+    # Agrupar por colaborador
+    grupos = {}
+    for a in qs:
+        c = a.obligacion.colaborador.nombre
+        if c not in grupos:
+            grupos[c] = []
+        grupos[c].append({
+            'id':           a.pk,
+            'actividad_id': a.actividad_id,
+            'descripcion':  a.descripcion,
+            'obligacion':   a.obligacion.descripcion,
+            'estado':       a.estado,
+            'progreso':     a.progreso,
+            'fecha_inicio': a.fecha_inicio.isoformat(),
+            'fecha_fin':    a.fecha_fin.isoformat(),
+            'total_semanas': len(a.semanas_activas),
+            'semana_num': (a.semanas_activas.index(semana) + 1) if semana in a.semanas_activas else 0,
+        })
+
+    fechas = SEMANA_FECHAS.get(semana, ('', ''))
+
+    return JsonResponse({
+        'semana':              semana,
+        'fecha_inicio':        fechas[0],
+        'fecha_fin':           fechas[1],
+        'total_colaboradores': len(grupos),
+        'total_actividades':   sum(len(v) for v in grupos.values()),
+        'grupos':              grupos,
+    })
+
+
+# ============================================================
+#  VISTA RESUMEN GENERAL — KPIs semanales para subdirector
+# ============================================================
+
+def _calcular_resumen(semana):
+    """Calcula KPIs y tabla por colaborador para una semana dada."""
+    base_qs = Actividad.objects.select_related(
+        'obligacion__colaborador'
+    ).order_by('obligacion__colaborador__nombre', 'orden')
+    qs = [a for a in base_qs if semana in (a.semanas_activas or [])]
+
+    total       = len(qs)
+    completadas = sum(1 for a in qs if a.estado == 'completada')
+    en_curso    = sum(1 for a in qs if a.estado == 'en_curso')
+    pendientes  = sum(1 for a in qs if a.estado == 'pendiente')
+    bloqueadas  = sum(1 for a in qs if a.estado == 'bloqueada')
+    avance_general = round(sum(a.progreso for a in qs) / total) if total > 0 else 0
+
+    grupos = {}
+    for a in qs:
+        c = a.obligacion.colaborador.nombre
+        if c not in grupos:
+            grupos[c] = {'compromisos': 0, 'completadas': 0, 'en_curso': 0,
+                         'pendientes': 0, 'bloqueadas': 0, 'progreso_sum': 0}
+        g = grupos[c]
+        g['compromisos']  += 1
+        g['progreso_sum'] += a.progreso
+        if a.estado == 'completada':  g['completadas'] += 1
+        elif a.estado == 'en_curso':  g['en_curso']    += 1
+        elif a.estado == 'pendiente': g['pendientes']  += 1
+        elif a.estado == 'bloqueada': g['bloqueadas']  += 1
+
+    por_colaborador = []
+    for nombre, g in sorted(grupos.items()):
+        avance = round(g['progreso_sum'] / g['compromisos']) if g['compromisos'] > 0 else 0
+        por_colaborador.append({
+            'colaborador': nombre,
+            'compromisos': g['compromisos'],
+            'completadas': g['completadas'],
+            'en_curso':    g['en_curso'],
+            'pendientes':  g['pendientes'],
+            'bloqueadas':  g['bloqueadas'],
+            'avance':      avance,
+        })
+
+    fechas = SEMANA_FECHAS.get(semana, ('', ''))
+    return {
+        'semana':            semana,
+        'fecha_inicio':      fechas[0],
+        'fecha_fin':         fechas[1],
+        'total_compromisos': total,
+        'avance_general':    avance_general,
+        'completadas':       completadas,
+        'en_curso':          en_curso,
+        'pendientes':        pendientes,
+        'bloqueadas':        bloqueadas,
+        'por_colaborador':   por_colaborador,
+    }
+
+
+@login_required
+def resumen_view(request):
+    semana_actual = _semana_actual()
+    idx = SEMANAS_ORDENADAS.index(semana_actual) if semana_actual in SEMANAS_ORDENADAS else 0
+    semana_default = SEMANAS_ORDENADAS[max(0, idx - 1)]
+    total = len([a for a in Actividad.objects.all()
+                 if semana_default in (a.semanas_activas or [])])
+    return render(request, 'dashboard/resumen.html', {
+        'modulo_activo':  'actividades',
+        'semanas':        SEMANAS_ORDENADAS,
+        'semana_actual':  semana_actual,
+        'semana_default': semana_default,
+        'semana_fechas':  json.dumps(SEMANA_FECHAS),
+        'total_inicial':  total,
+    })
+
+
+@login_required
+def resumen_data(request):
+    semana = request.GET.get('semana', _semana_actual())
+    total = len([a for a in Actividad.objects.all()
+                 if semana in (a.semanas_activas or [])])
+    return JsonResponse({'total': total})

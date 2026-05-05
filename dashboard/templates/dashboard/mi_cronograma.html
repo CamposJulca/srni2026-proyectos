@@ -1,0 +1,190 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Mi Cronograma{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{% static 'dashboard/css/actividades.css' %}">
+<link rel="stylesheet" href="{% static 'dashboard/css/semana.css' %}">
+<link rel="stylesheet" href="{% static 'dashboard/css/mi_cronograma.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="page-main">
+  <div class="act-page">
+
+    <!-- TOOLBAR -->
+    <div class="act-toolbar">
+      <div class="act-toolbar-left">
+        <h2 class="act-titulo">Mi Cronograma</h2>
+        <span class="act-subtitulo">{{ colaborador.nombre }}</span>
+      </div>
+      <div class="act-toolbar-right">
+        <label class="mic-toggle">
+          <input type="checkbox" id="chk-solo-semana">
+          <span>Solo semana actual</span>
+        </label>
+        <a href="/actividades/" class="act-btn-secundario" style="display:flex;align-items:center;gap:6px;text-decoration:none;height:36px;padding:0 14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Ver Gantt General
+        </a>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="sem-stats" id="mic-stats">
+      <div class="sem-stat">
+        <span id="mic-stat-total">0</span>
+        <small>Total actividades</small>
+      </div>
+      <div class="sem-stat sem-stat-completada">
+        <span id="mic-stat-completadas">0</span>
+        <small>Completadas</small>
+      </div>
+      <div class="sem-stat" style="border-left-color:#0891b2">
+        <span id="mic-stat-en_curso">0</span>
+        <small>En Curso</small>
+      </div>
+      <div class="sem-stat sem-stat-pendiente">
+        <span id="mic-stat-pendientes">0</span>
+        <small>Pendientes</small>
+      </div>
+      <div class="sem-stat">
+        <span id="mic-stat-avance">0%</span>
+        <small>Avance promedio</small>
+      </div>
+    </div>
+
+    <!-- REPORTE SEMANAL -->
+    <div class="mic-reporte-wrap" id="mic-reporte-wrap">
+      <div class="mic-reporte-header">
+        <h3>Reporte Semanal — <span id="mic-reporte-semana">{{ semana_actual }}</span></h3>
+        <span class="mic-reporte-status" id="mic-reporte-status"></span>
+      </div>
+      <div class="mic-reporte-body">
+        <div class="act-form-group">
+          <label>Que hiciste esta semana?</label>
+          <textarea id="mic-reporte-que-hizo" rows="3" placeholder="Describe las actividades realizadas, productos entregados, reuniones, etc."></textarea>
+        </div>
+        <div class="act-form-group">
+          <label>Impedimentos o bloqueos (opcional)</label>
+          <textarea id="mic-reporte-impedimentos" rows="2" placeholder="Algo que te bloqueo o retrasó?"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+          <button type="button" class="act-btn-primario" id="btn-guardar-reporte">Guardar reporte</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LISTA DE ACTIVIDADES -->
+    <div id="mic-body">
+      <div class="sem-loading" id="mic-loading">
+        <div class="sem-spinner"></div>
+        <p>Cargando actividades...</p>
+      </div>
+      <div class="sem-vacio" id="mic-vacio" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        <p>No hay actividades asignadas</p>
+      </div>
+      <div class="mic-grid" id="mic-grid"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODAL ACTUALIZAR -->
+<div class="act-modal-overlay" id="mic-modal-overlay">
+  <div class="act-modal mic-modal-wide" id="mic-modal">
+    <div class="act-modal-header">
+      <h3 id="mic-modal-titulo">Actualizar actividad</h3>
+      <button class="act-modal-close" id="mic-modal-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <form id="mic-modal-form" class="act-modal-body">
+      <input type="hidden" id="mic-modal-id">
+      <div class="act-form-group">
+        <label>Obligacion</label>
+        <p id="mic-modal-oblig" class="mic-readonly-field"></p>
+      </div>
+      <div class="act-form-group">
+        <label>Descripcion</label>
+        <p id="mic-modal-desc" class="mic-readonly-field"></p>
+      </div>
+      <div class="act-form-row">
+        <div class="act-form-group">
+          <label>Periodo</label>
+          <p id="mic-modal-fechas" class="mic-readonly-field"></p>
+        </div>
+      </div>
+      <div class="act-form-row">
+        <div class="act-form-group">
+          <label>Estado</label>
+          <select id="mic-modal-estado" class="act-select">
+            <option value="pendiente">Pendiente</option>
+            <option value="en_curso">En Curso</option>
+            <option value="completada">Completada</option>
+            <option value="bloqueada">Bloqueada</option>
+          </select>
+        </div>
+        <div class="act-form-group">
+          <label>Progreso: <span id="mic-modal-progreso-val">0</span>%</label>
+          <input type="range" id="mic-modal-progreso" min="0" max="100" value="0">
+        </div>
+      </div>
+      <div class="act-form-group">
+        <label>Notas / descripcion del avance</label>
+        <textarea id="mic-modal-evidencia" rows="3" placeholder="Describe brevemente lo que avanzaste..."></textarea>
+      </div>
+
+      <!-- EVIDENCIAS (archivos) -->
+      <div class="act-form-group">
+        <label>Evidencias adjuntas</label>
+        <div class="mic-evidencias-list" id="mic-evidencias-list">
+          <p class="mic-evidencias-vacio">Cargando...</p>
+        </div>
+        <div class="mic-upload-area">
+          <input type="file" id="mic-upload-input" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip,.rar,.txt,.csv,.pptx">
+          <button type="button" class="act-btn-secundario" id="mic-btn-upload">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Subir archivo (max 10MB)
+          </button>
+          <input type="text" id="mic-upload-comentario" placeholder="Comentario del archivo (opcional)" class="mic-upload-comment">
+        </div>
+      </div>
+
+      <div class="act-modal-footer">
+        <div class="mic-modal-warning" id="mic-modal-warning" style="display:none">
+          Para marcar como completada necesitas al menos 1 evidencia adjunta.
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button type="button" class="act-btn-secundario" id="mic-modal-cancelar">Cancelar</button>
+          <button type="submit" class="act-btn-primario">Guardar avance</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ semanas|json_script:"js-semanas" }}
+{{ semana_fechas|json_script:"js-semana-fechas" }}
+<script>
+const SEMANA_ACTUAL = "{{ semana_actual }}";
+const SEMANAS_ORDENADAS = JSON.parse(document.getElementById('js-semanas').textContent);
+const SEMANA_FECHAS = JSON.parse(document.getElementById('js-semana-fechas').textContent);
+</script>
+<script src="{% static 'dashboard/js/mi_cronograma.js' %}"></script>
+{% endblock %}

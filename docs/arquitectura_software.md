@@ -1,417 +1,319 @@
-# Arquitectura de Software — SRNI 2026 Dashboard
-**Sistema:** Dashboard de Instrumentalización — Subdirección Red Nacional de Información
-**Fecha:** Marzo 2026
-**Versión:** 1.0
+# Arquitectura de Software — Modulo Cronograma SRNI 2026
+
+**Sistema:** Dashboard de Instrumentalizacion — Subdireccion Red Nacional de Informacion  
+**Version:** 2.0  
+**Fecha:** Abril 2026
 
 ---
 
-## 1. Visión General del Sistema
+## 1. Vista General
 
-```mermaid
-graph TB
-    subgraph Cliente["Navegador Web"]
-        HTML["HTML5 Templates"]
-        CSS["CSS3 (Vanilla)"]
-        JS["JavaScript ES6 (Vanilla)"]
-    end
-
-    subgraph Tunel["Túnel ngrok"]
-        NGROK["srni-backend.ngrok.io\n:443 HTTPS"]
-    end
-
-    subgraph Servidor["Servidor de Aplicación (Linux)"]
-        GUNICORN["Gunicorn WSGI\n:8000"]
-        DJANGO["Django 6.0.3"]
-        WHITENOISE["WhiteNoise\n(archivos estáticos)"]
-    end
-
-    subgraph App["Aplicación Django"]
-        URLS["URL Router\nurls.py"]
-        VIEWS["View Functions\nviews.py"]
-        MODELS["Models ORM\nmodels.py"]
-        ADMIN["Django Admin\n/admin/"]
-        MGMT["Management Commands\nimportar_cronogramas.py"]
-    end
-
-    subgraph Datos["Capa de Datos"]
-        SQLITE[("SQLite\ndb.sqlite3")]
-        MARKDOWN["Archivos Markdown\ndata/Cronogramas_actividades/"]
-    end
-
-    Cliente -->|HTTPS / JSON| NGROK
-    NGROK -->|HTTP| GUNICORN
-    GUNICORN --> DJANGO
-    DJANGO --> WHITENOISE
-    DJANGO --> App
-    URLS --> VIEWS
-    VIEWS --> MODELS
-    MODELS --> SQLITE
-    MGMT -->|Lee .md| MARKDOWN
-    MGMT -->|Escribe| SQLITE
+```
+                    +-----------------------+
+                    |    USUARIO FINAL      |
+                    |  (Browser / HTTPS)    |
+                    +-----------+-----------+
+                                |
+                    +-----------+-----------+
+                    |       NGROK           |
+                    |  (Tunel HTTPS:443)    |
+                    +-----------+-----------+
+                                |
+                    +-----------+-----------+
+                    |     GUNICORN          |
+                    |  (WSGI :8085)         |
+                    |  3 workers            |
+                    +-----------+-----------+
+                                |
+              +-----------------+-----------------+
+              |                                   |
+   +----------+----------+            +-----------+-----------+
+   |    DJANGO APP       |            |     WHITENOISE        |
+   |  (config.wsgi)      |            |  (Archivos estaticos) |
+   +----------+----------+            +-----------+-----------+
+              |                                   |
+   +----------+----------+            +-----------+-----------+
+   |     SQLite3         |            |   /staticfiles/       |
+   |   (db.sqlite3)      |            |   CSS, JS, IMG        |
+   +---------------------+            +-----------------------+
+              |
+   +----------+----------+
+   |   /media/evidencias/ |
+   |   (Archivos subidos) |
+   +-----------------------+
 ```
 
 ---
 
-## 2. Arquitectura de Capas
+## 2. Arquitectura por Capas
 
-```mermaid
-graph LR
-    subgraph Frontend["Capa de Presentación"]
-        direction TB
-        V1["actividades.html\nGantt Chart"]
-        V2["semana.html\nVista Semanal"]
-        V3["resumen.html\nDashboard Gerencial"]
-        V4["dashboard_view.html\nProyectos / Módulos"]
-        V5["gerencial_view.html\nDashboard Subdirector"]
-        V6["crud_view.html\nGestión de Datos"]
-        V7["login.html / home.html"]
-    end
+### Capa de Presentacion (Frontend)
 
-    subgraph API["Capa de Negocio (Views)"]
-        direction TB
-        A1["actividades_data\nactividad_crear\nactividad_detalle"]
-        A2["semana_data"]
-        A3["resumen_data"]
-        A4["dashboard_data\ngerencial_data"]
-        A5["crud_meta\ncrud_lista\ncrud_detalle\ncrud_crear"]
-        A6["sql_query"]
-        A7["carga (Excel import)"]
-    end
+```
+Templates Django (Jinja2)
+    |
+    ├── base.html              # Layout: header, nav, footer
+    ├── actividades.html       # Gantt + filtros + modal
+    ├── semana.html            # Vista semanal + tarjetas
+    ├── resumen.html           # KPIs + tabla colaboradores
+    └── mi_cronograma.html     # Autoservicio colaborador
 
-    subgraph ORM["Capa de Acceso a Datos (ORM)"]
-        direction TB
-        M1["CronogramaActividad"]
-        M2["Proyecto\nModulo"]
-        M3["Persona\nRol\nAsignacion"]
-        M4["PlanAccion"]
-    end
+JavaScript (vanilla, sin frameworks)
+    |
+    ├── actividades.js         # Gantt rendering, coloreo por proyecto, filtros
+    ├── semana.js              # Tarjetas semanales, navegacion
+    ├── resumen.js             # KPIs, barra distribucion, tabla
+    └── mi_cronograma.js       # Autoservicio, evidencias, reportes
 
-    DB[("SQLite\ndb.sqlite3")]
+CSS
+    |
+    ├── dashboard.css          # Variables globales, layout base
+    ├── actividades.css        # Gantt, barras, modal, leyenda
+    ├── semana.css             # Navegador semanas, tarjetas
+    ├── resumen.css            # KPIs, distribucion, tabla avance
+    └── mi_cronograma.css      # Vista personal
+```
 
-    V1 & V2 & V3 -->|fetch JSON| A1 & A2 & A3
-    V4 & V5 -->|fetch JSON| A4
-    V6 -->|fetch JSON| A5
-    A6 -->|SQL directo| DB
-    A1 & A2 & A3 --> M1
-    A4 --> M2 & M3
-    A5 --> M2 & M3 & M4
-    A7 --> M3
-    M1 & M2 & M3 & M4 --> DB
+### Capa de Logica de Negocio (Backend)
+
+```
+dashboard/views.py (~1600 lineas)
+    |
+    ├── Autenticacion          # login_view, logout_view
+    ├── Actividades API        # actividades_data, actividad_crear, actividad_detalle
+    ├── Semana API             # semana_data (agrupacion por colaborador)
+    ├── Resumen API            # resumen_data (KPIs + tabla)
+    ├── Mi Cronograma API      # mi_cronograma_data, mi_actividad_update
+    ├── Evidencias API         # evidencias_lista, evidencia_subir, evidencia_eliminar
+    ├── Reportes API           # reporte_semanal_data, reporte_semanal_guardar
+    └── Helpers                # _semana_actual(), _calcular_resumen()
+
+dashboard/permisos.py
+    |
+    ├── _es_admin(user)        # Verifica rol admin
+    ├── @admin_required        # Decorador para vistas admin
+    └── user_role(request)     # Context processor para templates
+```
+
+### Capa de Datos (Modelos)
+
+```
+dashboard/models.py (10 modelos)
+
+    Procedimiento (1)──>(N) Colaborador (1)──>(N) Obligacion (1)──>(N) Actividad
+                              |                                         |
+                              |                                    (1)──>(N) EvidenciaActividad
+                              |
+                              ├──(1)──>(1) Perfil ──>(1) User
+                              ├──(1)──>(N) Asignacion ──> Modulo ──> Proyecto
+                              ├──(1)──>(N) CuentaCobro
+                              └──(1)──>(N) ReporteSemanal
+```
+
+### Capa de Importacion
+
+```
+dashboard/management/commands/
+    |
+    ├── importar_cronogramas.py    # .md → Obligacion + Actividad
+    |       |
+    |       ├── detectar_formato()         # 4 formatos soportados
+    |       ├── parse_formato_secciones()  # ### con tablas
+    |       ├── parse_formato_wbs()        # Fechas explicitas
+    |       ├── parse_formato_tabla_plana_dos_cols()
+    |       └── parse_formato_tabla_sin_secciones()
+    |
+    └── calcular_progreso.py       # Tiempo transcurrido → progreso %
 ```
 
 ---
 
-## 3. Modelo de Datos (ERD)
+## 3. Flujo de Datos
 
-```mermaid
-erDiagram
-    Proyecto {
-        int id PK
-        string nombre
+### 3.1 Carga Inicial (Importacion)
+
+```
+data/Cronogramas_actividades/*.md
+         |
+    [importar_cronogramas --limpiar]
+         |
+    +---------+     +------------+     +-----------+
+    | Parsear |---->| Colaborador|---->| Obligacion|
+    | formato |     | (match)    |     | (get/cre) |
+    +---------+     +------------+     +-----------+
+                                            |
+                                       +-----------+
+                                       | Actividad |
+                                       | (create)  |
+                                       +-----------+
+         |
+    [calcular_progreso]
+         |
+    progreso % + estado coherente
+```
+
+### 3.2 Consulta Gantt (Lectura)
+
+```
+Browser                    Django                      DB
+   |                         |                          |
+   |-- GET /actividades/ --->|                          |
+   |<-- HTML + JS -----------|                          |
+   |                         |                          |
+   |-- GET /api/actividades/ |                          |
+   |   ?colaborador=X        |                          |
+   |   &proyecto=Y --------->|-- SELECT Actividad ----->|
+   |                         |   JOIN Obligacion        |
+   |                         |   JOIN Colaborador       |
+   |                         |   JOIN Asignacion ------>|
+   |                         |<-- QuerySet -------------|
+   |                         |                          |
+   |                         |-- Calcular estado_visual |
+   |                         |-- Inferir proyecto       |
+   |<-- JSON tasks[] --------|                          |
+   |                         |                          |
+   |-- Render Gantt -------->|                          |
+   |   (color por proyecto)  |                          |
+```
+
+### 3.3 Actualizacion de Actividad (Colaborador)
+
+```
+Browser                    Django                      DB
+   |                         |                          |
+   |-- POST /api/mi-crono/  |                          |
+   |   {progreso, estado} -->|                          |
+   |                         |-- Verificar Perfil ----->|
+   |                         |-- Verificar ownership -->|
+   |                         |                          |
+   |                         |-- Si completada:         |
+   |                         |   evidencias.count() > 0 |
+   |                         |                          |
+   |                         |-- UPDATE Actividad ----->|
+   |<-- {ok: true} ----------|                          |
+```
+
+### 3.4 Subida de Evidencia
+
+```
+Browser                    Django                      Filesystem
+   |                         |                          |
+   |-- POST multipart       |                          |
+   |   archivo + comentario  |                          |
+   |------------------------>|-- Validar tamano <=10MB  |
+   |                         |-- Validar permisos       |
+   |                         |-- FileField.save() ----->| /media/evidencias/2026/04/
+   |                         |-- CREATE EvidenciaAct -->| DB
+   |<-- {ok, url, id} ------|                          |
+```
+
+---
+
+## 4. Modelo de Seguridad
+
+### Autenticacion
+
+```
+POST /login/
+    |
+    ├── authenticate(username, password)
+    ├── login(request, user)
+    └── Redirect: admin → / , colaborador → /mi-cronograma/
+```
+
+### Autorizacion (3 niveles)
+
+```
+Nivel 1: @login_required
+    Todo el modulo requiere sesion activa
+
+Nivel 2: @admin_required
+    CRUD, carga masiva, consultas SQL, reportes admin
+
+Nivel 3: Ownership check (en la vista)
+    - mi_actividad_update: Perfil.colaborador == actividad.obligacion.colaborador
+    - evidencia_subir: dueno de la actividad o admin
+    - evidencia_eliminar: creador del archivo o admin
+```
+
+### CSRF
+
+Todas las peticiones POST incluyen `X-CSRFToken` desde cookie via JavaScript.
+
+---
+
+## 5. Configuracion
+
+```python
+# config/settings.py
+
+DEBUG = True
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "srni-backend.ngrok.io"]
+CSRF_TRUSTED_ORIGINS = ["https://srni-backend.ngrok.io"]
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
+}
 
-    Modulo {
-        int id PK
-        int proyecto_id FK
-        string nombre
-        string referente
-    }
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-    Persona {
-        int id PK
-        string nombre
-        string cedula
-        string procedimiento
-        date fecha_inicio
-        date fecha_fin
-        decimal honorarios
-        text objeto
-        text obligaciones
-    }
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
-    Rol {
-        int id PK
-        string nombre
-    }
-
-    Asignacion {
-        int id PK
-        int modulo_id FK
-        int persona_id FK
-        int rol_id FK
-    }
-
-    PlanAccion {
-        int id PK
-        int modulo_id FK
-        text compromiso
-        string mes
-    }
-
-    CronogramaActividad {
-        int id PK
-        string colaborador
-        string obligacion
-        string actividad_id
-        text descripcion
-        date fecha_inicio
-        date fecha_fin
-        int progreso
-        string estado
-        int orden
-        json semanas_activas
-    }
-
-    Proyecto ||--o{ Modulo : "tiene"
-    Modulo ||--o{ Asignacion : "tiene"
-    Modulo ||--o{ PlanAccion : "tiene"
-    Persona ||--o{ Asignacion : "participa en"
-    Rol ||--o{ Asignacion : "define"
+LOGIN_URL = '/login/'
 ```
 
 ---
 
-## 4. Flujo de Petición HTTP
+## 6. Despliegue
 
-```mermaid
-sequenceDiagram
-    actor Usuario
-    participant Browser as Navegador
-    participant ngrok as ngrok (HTTPS)
-    participant Gunicorn
-    participant Django
-    participant View as View Function
-    participant ORM
-    participant DB as SQLite
+```bash
+# Servidor de produccion (actual)
+gunicorn config.wsgi:application --workers 3 --bind 0.0.0.0:8085
 
-    Usuario->>Browser: Accede a /actividades/
-    Browser->>ngrok: HTTPS GET
-    ngrok->>Gunicorn: HTTP GET
-    Gunicorn->>Django: WSGI request
-    Django->>Django: Middleware (Auth, CSRF, Session)
-    Django->>View: actividades_view(request)
-    View->>View: @login_required check
-    View->>ORM: CronogramaActividad.objects.values()
-    ORM->>DB: SELECT DISTINCT colaborador, obligacion
-    DB-->>ORM: rows
-    ORM-->>View: QuerySet
-    View-->>Django: render(template, context)
-    Django-->>Gunicorn: HttpResponse (HTML)
-    Gunicorn-->>ngrok: HTTP 200
-    ngrok-->>Browser: HTTPS 200
-    Browser->>ngrok: HTTPS GET /api/actividades/
-    ngrok->>Gunicorn: HTTP GET
-    Gunicorn->>Django: WSGI request
-    Django->>View: actividades_data(request)
-    View->>ORM: CronogramaActividad.objects.filter(...)
-    ORM->>DB: SELECT * FROM cronograma WHERE ...
-    DB-->>ORM: rows
-    ORM-->>View: QuerySet
-    View-->>Browser: JsonResponse {tasks: [...]}
-    Browser->>Browser: renderGantt(tasks)
+# Recargar despues de cambios
+kill -HUP <PID_MASTER>          # Recarga workers sin downtime
+
+# Rebuild estaticos
+rm -rf staticfiles/
+python manage.py collectstatic --noinput
+
+# Migraciones
+python manage.py migrate
+
+# Importar datos
+python manage.py importar_cronogramas --limpiar
+python manage.py calcular_progreso
+python manage.py crear_usuarios
 ```
 
 ---
 
-## 5. Flujo de Importación de Cronogramas
+## 7. Decisiones de Arquitectura
 
-```mermaid
-flowchart TD
-    START([python manage.py importar_cronogramas]) --> LIMPIAR{--limpiar?}
-    LIMPIAR -->|Sí| DELETE[DELETE FROM CronogramaActividad]
-    LIMPIAR -->|No| SCAN
-    DELETE --> SCAN
-
-    SCAN[Escanear data/Cronogramas_actividades/*.md]
-    SCAN --> FOREACH[Para cada archivo .md]
-
-    FOREACH --> HEADER[Extraer nombre colaborador del encabezado]
-    HEADER --> DETECT{Detectar formato}
-
-    DETECT -->|WBS + fechas| FMT1[Parsear fechas explícitas\nStart/End/%]
-    DETECT -->|Secciones + tabla| FMT2[Parsear secciones ### + tabla ✅]
-    DETECT -->|Obligación+Actividad| FMT3[Parsear 2 cols fijas + semanas ✅]
-    DETECT -->|Tabla plana| FMT4[Parsear # + Actividad + semanas ✅]
-
-    FMT1 & FMT2 & FMT3 & FMT4 --> SEMANAS[Recopilar semanas_activas con ✅]
-    SEMANAS --> FECHAS[fecha_inicio = primera semana\nfecha_fin = última semana]
-    FECHAS --> SAVE[CronogramaActividad.objects.create]
-    SAVE --> FOREACH
-
-    FOREACH --> END([Fin: N actividades importadas])
-```
+| Decision | Justificacion |
+|----------|---------------|
+| SQLite en vez de PostgreSQL | Equipo pequeno (~100 usuarios), baja concurrencia, simplicidad de despliegue |
+| JavaScript vanilla en vez de React/Vue | Modulo interno, sin necesidad de SPA, menor complejidad |
+| JSON APIs propias en vez de DRF | Endpoints simples, sin necesidad de serializadores complejos |
+| WhiteNoise en vez de Nginx | Despliegue simplificado, Django sirve todo |
+| Semanas hardcodeadas en vez de calculadas | Calendario laboral colombiano con festivos, no sigue ISO weeks |
+| `semanas_activas` JSONField | Permite semanas no contiguas (actividades intermitentes) |
+| Importacion desde Markdown | Los colaboradores ya manejan ese formato para sus cronogramas |
 
 ---
 
-## 6. Mapa de URLs
+## 8. Limitaciones Conocidas
 
-```mermaid
-graph LR
-    ROOT["/"] --> HOME["home\n(lanzador)"]
-
-    subgraph Auth
-        LOGIN["/login/"]
-        LOGOUT["/logout/"]
-    end
-
-    subgraph Vistas["Vistas Web"]
-        DASH["/dashboard/"]
-        GER["/gerencial/"]
-        CRUD["/crud/"]
-        CONS["/consultas/"]
-        CARGA["/carga/"]
-        ACT["/actividades/"]
-        SEM["/actividades/semana/"]
-        RES["/actividades/resumen/"]
-    end
-
-    subgraph APIs["APIs JSON"]
-        ADASH["/api/dashboard/"]
-        AGER["/api/gerencial/"]
-        ASQL["/api/sql/"]
-        ACMETA["/api/crud/meta/"]
-        ACLISTA["/api/crud/<tabla>/"]
-        ACCREATE["/api/crud/<tabla>/crear/"]
-        ACDETALLE["/api/crud/<tabla>/<pk>/"]
-        AACT["/api/actividades/"]
-        AACTCRE["/api/actividades/crear/"]
-        AACTDET["/api/actividades/<pk>/"]
-        ASEMANA["/api/actividades/semana/"]
-        ARES["/api/actividades/resumen/"]
-    end
-
-    ACT -->|fetch| AACT
-    ACT -->|POST| AACTCRE
-    ACT -->|GET/PUT/DELETE| AACTDET
-    SEM -->|fetch| ASEMANA
-    RES -->|fetch| ARES
-    DASH -->|fetch| ADASH
-    GER -->|fetch| AGER
-    CRUD -->|fetch| ACMETA & ACLISTA & ACCREATE & ACDETALLE
-    CONS -->|POST| ASQL
-```
-
----
-
-## 7. Módulo Actividades — Componentes Frontend
-
-```mermaid
-graph TB
-    subgraph actividades_html["actividades.html"]
-        TOOLBAR["Toolbar\n(filtros + botones)"]
-        STATS["Stats Bar\n(KPI badges)"]
-        GANTT["Gantt Chart\n(.gantt-scroll-x)"]
-        TABLA["Detail Table\n(#tabla-actividades)"]
-        MODAL["Modal\n(crear / editar)"]
-    end
-
-    subgraph actividades_js["actividades.js"]
-        TIMELINE["TIMELINE config\n(2026-01-01 → 2026-12-31)"]
-        RENDER_H["renderTimelineHeader()"]
-        RENDER_G["renderGantt(tasks)"]
-        RENDER_T["renderTabla(tasks)"]
-        RENDER_S["renderStats(tasks)"]
-        HOY["renderHoyLine()"]
-        COLOR["colorColaborador(nombre)"]
-        LOAD["cargarDatos()\nGET /api/actividades/"]
-        MODAL_JS["abrirModal() / cerrarModal()\nPOST/PUT /api/actividades/"]
-    end
-
-    TOOLBAR -->|onChange| LOAD
-    LOAD -->|tasks[]| RENDER_G & RENDER_T & RENDER_S
-    RENDER_G --> GANTT
-    RENDER_T --> TABLA
-    RENDER_S --> STATS
-    RENDER_H --> GANTT
-    HOY --> GANTT
-    COLOR --> RENDER_G
-    MODAL_JS --> MODAL
-    GANTT -->|click bar| MODAL_JS
-    TABLA -->|click edit| MODAL_JS
-```
-
----
-
-## 8. Gestión de Autenticación y Sesiones
-
-```mermaid
-stateDiagram-v2
-    [*] --> NoAutenticado
-
-    NoAutenticado --> Login: GET /login/
-    Login --> Autenticado: POST /login/ (credenciales válidas)
-    Login --> Login: credenciales inválidas
-
-    Autenticado --> Dashboard: GET /
-    Autenticado --> Actividades: GET /actividades/
-    Autenticado --> NoAutenticado: GET /logout/
-
-    state Autenticado {
-        [*] --> Sesion
-        Sesion --> Sesion: Requests con session cookie
-        Sesion --> CSRF: POST/PUT/DELETE requiere X-CSRFToken
-    }
-
-    NoAutenticado --> Login: @login_required\nredirect → /login/?next=...
-```
-
----
-
-## 9. Dependencias del Proyecto
-
-```mermaid
-graph LR
-    subgraph Runtime["Dependencias Runtime"]
-        DJ["Django 6.0.3\n(framework web)"]
-        GU["Gunicorn 25.1.0\n(servidor WSGI)"]
-        WN["WhiteNoise 6.12.0\n(archivos estáticos)"]
-        AS["asgiref 3.11.1\n(ASGI support)"]
-        SP["sqlparse 0.5.5\n(formato SQL)"]
-    end
-
-    subgraph Optional["Dependencia Opcional"]
-        OP["openpyxl\n(importar Excel)"]
-    end
-
-    subgraph Python["Python 3.13+"]
-        DJ & GU & WN & AS & SP & OP
-    end
-
-    subgraph Frontend["Sin dependencias externas"]
-        VJS["Vanilla JS ES6"]
-        VCSS["Vanilla CSS3"]
-        VH["HTML5"]
-    end
-```
-
----
-
-## 10. Despliegue
-
-```mermaid
-graph TB
-    subgraph Internet
-        CLIENTE["Usuario Final\n(Navegador)"]
-        NGROK_SVC["Servicio ngrok\n(proxy inverso HTTPS)"]
-    end
-
-    subgraph LAN["Red Local / Servidor"]
-        NGROK_CLI["ngrok client\n(túnel TCP)"]
-        GUNICORN_SVC["Gunicorn\n0.0.0.0:8000"]
-
-        subgraph Django_App["Aplicación Django"]
-            SETTINGS["config/settings.py\nDEBUG=True\nSQLITE"]
-            STATIC["staticfiles/\n(WhiteNoise)"]
-            DB_FILE["db.sqlite3"]
-        end
-    end
-
-    CLIENTE -->|HTTPS :443| NGROK_SVC
-    NGROK_SVC <-->|túnel encriptado| NGROK_CLI
-    NGROK_CLI -->|HTTP :8000| GUNICORN_SVC
-    GUNICORN_SVC --> Django_App
-    SETTINGS --> DB_FILE
-    SETTINGS --> STATIC
-```
-
-> **Nota de producción:** Para un despliegue productivo se recomienda reemplazar SQLite por PostgreSQL, configurar `DEBUG=False`, usar una `SECRET_KEY` segura y considerar un servidor proxy como Nginx en lugar del túnel ngrok.
+| Limitacion | Impacto | Mitigacion |
+|------------|---------|------------|
+| SQLite: escrituras concurrentes | Locking en escrituras simultaneas | Bajo riesgo por baja concurrencia |
+| Actividades sin proyecto directo | 200/200 actividades con proyecto=NULL | Se infiere desde asignaciones del colaborador |
+| Calendario 2026 hardcodeado | Requiere actualizacion para 2027 | Actualizar SEMANA_FECHAS en views.py e importar_cronogramas.py |
+| 16 colaboradores sin cronograma | Avance real del equipo incompleto | Pendiente recibir cronogramas estandar |
+| Archivos estaticos con hash de cache | Requiere Ctrl+Shift+R despues de deploy | Comportamiento esperado de WhiteNoise |

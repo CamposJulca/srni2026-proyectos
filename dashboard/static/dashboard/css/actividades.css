@@ -42,6 +42,34 @@
 }
 .act-select:focus { border-color: var(--azul); }
 
+.act-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.act-search-icon {
+  position: absolute;
+  left: 10px;
+  width: 15px;
+  height: 15px;
+  color: var(--gris-3);
+  pointer-events: none;
+}
+.act-search-input {
+  height: 36px;
+  padding: 0 10px 0 32px;
+  border: 1.5px solid var(--gris-2);
+  border-radius: var(--radio-sm);
+  font-size: 0.82rem;
+  background: var(--blanco);
+  color: var(--texto);
+  min-width: 220px;
+  outline: none;
+  transition: var(--trans);
+}
+.act-search-input:focus { border-color: var(--azul); }
+.act-search-input::placeholder { color: var(--gris-3); }
+
 .act-btn-nuevo {
   display: flex;
   align-items: center;
@@ -85,6 +113,41 @@
 .act-stat-completada span { color: var(--verde); }
 .act-stat-bloqueada span  { color: var(--rojo); }
 
+/* ---- Leyenda proyectos ---- */
+.act-leyenda {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 10px 16px;
+  background: var(--blanco);
+  border-radius: var(--radio-sm);
+  box-shadow: var(--sombra);
+}
+.act-leyenda:empty { display: none; }
+.act-leyenda-titulo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--texto-s);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.act-leyenda-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+.act-leyenda-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
 /* ---- Gantt wrapper ---- */
 .gantt-wrap {
   border-radius: var(--radio);
@@ -114,8 +177,8 @@
 }
 
 .gantt-col-izq {
-  min-width: 280px;
-  width: 280px;
+  min-width: 420px;
+  width: 420px;
   padding: 10px 16px;
   border-right: 1px solid rgba(255,255,255,0.2);
   flex-shrink: 0;
@@ -183,8 +246,8 @@
   min-width: max-content;
 }
 .gantt-grupo-nombre {
-  min-width: 280px;
-  width: 280px;
+  min-width: 420px;
+  width: 420px;
   padding: 7px 16px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -210,6 +273,51 @@
   min-width: 0;
 }
 
+/* Sub-grupo obligación */
+.gantt-subgrupo {
+  display: flex;
+  border-bottom: 1px solid var(--gris-2);
+  min-height: 30px;
+  min-width: max-content;
+  background: #f0f4ff;
+}
+.gantt-subgrupo-nombre {
+  min-width: 420px;
+  width: 420px;
+  padding: 6px 16px 6px 36px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-right: 1px solid var(--gris-2);
+  flex-shrink: 0;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #f0f4ff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--azul-p);
+  line-height: 1.4;
+}
+.gantt-subgrupo-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--azul-p);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.gantt-subgrupo-timeline {
+  flex: 1;
+  min-width: 0;
+}
+
 /* Filas actividad */
 .gantt-row {
   display: flex;
@@ -222,15 +330,15 @@
 .gantt-row:last-child { border-bottom: none; }
 
 .gantt-row-izq {
-  min-width: 280px;
-  width: 280px;
-  padding: 6px 16px 6px 28px;
+  min-width: 420px;
+  width: 420px;
+  padding: 6px 16px 6px 44px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   border-right: 1px solid var(--gris-2);
   flex-shrink: 0;
-  gap: 1px;
+  gap: 2px;
   position: sticky;
   left: 0;
   z-index: 5;
@@ -238,25 +346,27 @@
 }
 .gantt-row:hover .gantt-row-izq { background: var(--gris-1); }
 .gantt-row-id {
-  font-size: 0.68rem;
-  color: var(--texto-s);
-  font-weight: 600;
+  font-size: 0.7rem;
+  color: var(--azul-p);
+  font-weight: 700;
+}
+.gantt-row-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 .gantt-row-desc {
-  font-size: 0.77rem;
+  font-size: 0.78rem;
   color: var(--texto);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 230px;
+  line-height: 1.35;
 }
-.gantt-row-oblig {
-  font-size: 0.68rem;
-  color: var(--texto-s);
-  overflow: hidden;
-  text-overflow: ellipsis;
+.gantt-row-proy {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 4px;
   white-space: nowrap;
-  max-width: 230px;
 }
 
 .gantt-row-der {
@@ -379,8 +489,18 @@
 .act-tabla tr:last-child td { border-bottom: none; }
 .act-tabla tr:hover td { background: var(--gris-1); }
 
-.act-tabla td.td-desc { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.act-tabla td.td-oblig { max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--texto-s); font-size: 0.78rem; }
+.act-tabla td.td-desc { min-width: 200px; max-width: 380px; line-height: 1.35; }
+.act-tabla td.td-oblig { min-width: 180px; max-width: 340px; color: var(--texto-s); font-size: 0.78rem; line-height: 1.35; }
+.td-proy-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 4px;
+  margin-right: 6px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
 .act-tabla td.td-id { font-size: 0.75rem; color: var(--texto-s); }
 .act-tabla td.td-fecha { white-space: nowrap; font-size: 0.78rem; }
 
@@ -575,6 +695,6 @@
   .act-toolbar { flex-direction: column; align-items: flex-start; }
   .act-filtros { flex-direction: column; width: 100%; }
   .act-select { min-width: unset; width: 100%; }
-  .gantt-col-izq, .gantt-grupo-nombre, .gantt-row-izq { min-width: 180px; width: 180px; }
+  .gantt-col-izq, .gantt-grupo-nombre, .gantt-row-izq, .gantt-subgrupo-nombre { min-width: 250px; width: 250px; }
   .act-form-row { flex-direction: column; }
 }

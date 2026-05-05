@@ -6,6 +6,7 @@
 {% block head_extra %}
 <link rel="stylesheet" href="{% static 'dashboard/css/actividades.css' %}">
 <link rel="stylesheet" href="{% static 'dashboard/css/semana.css' %}">
+<link rel="stylesheet" href="{% static 'dashboard/css/resumen.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -18,11 +19,18 @@
         <span class="act-subtitulo">Instrumentalización SRNI &middot; 2026</span>
       </div>
       <div class="act-toolbar-right">
+        <select id="filtro-procedimiento-res" class="act-select">
+          <option value="">— Procedimiento —</option>
+          {% for p in procedimientos %}
+          <option value="{{ p }}">{{ p }}</option>
+          {% endfor %}
+        </select>
         <a href="/actividades/semana/" class="act-btn-secundario" style="display:flex;align-items:center;gap:6px;text-decoration:none;height:36px;padding:0 14px;white-space:nowrap">Vista Semanal</a>
         <a href="/actividades/" class="act-btn-secundario" style="display:flex;align-items:center;gap:6px;text-decoration:none;height:36px;padding:0 14px;white-space:nowrap">Ver Gantt</a>
       </div>
     </div>
 
+    <!-- Navegación de semanas -->
     <div class="sem-nav">
       <button class="sem-nav-btn" id="btn-sem-prev" title="Semana anterior">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -41,11 +49,67 @@
       <button class="sem-btn-hoy" id="btn-hoy">Semana actual</button>
     </div>
 
-    <div style="display:flex;justify-content:center;align-items:center;padding:60px 20px">
-      <div style="text-align:center">
-        <div id="res-total" style="font-size:5rem;font-weight:800;line-height:1;color:var(--texto);letter-spacing:-3px">{{ total_inicial }}</div>
-        <div style="font-size:0.85rem;color:var(--texto-s);text-transform:uppercase;letter-spacing:1px;margin-top:10px">Compromisos esta semana</div>
+    <!-- KPI Cards -->
+    <div class="res-kpis" id="res-kpis">
+      <div class="res-kpi res-kpi-total">
+        <div class="res-kpi-valor" id="kpi-total">0</div>
+        <div class="res-kpi-label">Total compromisos</div>
       </div>
+      <div class="res-kpi res-kpi-avance">
+        <div class="res-kpi-valor" id="kpi-avance">0</div>
+        <div class="res-kpi-label">Avance general</div>
+        <div class="res-kpi-barra"><div class="res-kpi-fill" id="kpi-avance-fill"></div></div>
+      </div>
+      <div class="res-kpi res-kpi-completada">
+        <div class="res-kpi-valor" id="kpi-completadas">0</div>
+        <div class="res-kpi-label">Completadas</div>
+      </div>
+      <div class="res-kpi res-kpi-encurso">
+        <div class="res-kpi-valor" id="kpi-en-curso">0</div>
+        <div class="res-kpi-label">En curso</div>
+      </div>
+      <div class="res-kpi res-kpi-pendiente">
+        <div class="res-kpi-valor" id="kpi-pendientes">0</div>
+        <div class="res-kpi-label">Pendientes</div>
+      </div>
+      <div class="res-kpi res-kpi-bloqueada">
+        <div class="res-kpi-valor" id="kpi-bloqueadas">0</div>
+        <div class="res-kpi-label">Bloqueadas</div>
+      </div>
+    </div>
+
+    <!-- Barra de distribución -->
+    <div class="res-dist-wrap" id="res-dist-wrap">
+      <div class="res-dist-titulo">Distribución de estados</div>
+      <div class="res-dist-bar" id="res-dist-bar"></div>
+      <div class="res-dist-leyenda">
+        <span><span class="res-dot res-dot-completada"></span> Completadas</span>
+        <span><span class="res-dot res-dot-encurso"></span> En curso</span>
+        <span><span class="res-dot res-dot-pendiente"></span> Pendientes</span>
+        <span><span class="res-dot res-dot-bloqueada"></span> Bloqueadas</span>
+      </div>
+    </div>
+
+    <!-- Tabla colaboradores -->
+    <div class="res-dist-wrap">
+      <div class="res-dist-titulo">Avance por colaborador</div>
+      <table class="res-tabla" id="res-tabla">
+        <thead>
+          <tr>
+            <th>Colaborador</th>
+            <th class="res-th-avance">Avance</th>
+            <th class="res-th-num">Total</th>
+            <th class="res-th-num">Comp.</th>
+            <th class="res-th-num">Curso</th>
+            <th class="res-th-num">Pend.</th>
+            <th class="res-th-num">Bloq.</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="res-tabla-body">
+          <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--texto-s)">Cargando...</td></tr>
+        </tbody>
+      </table>
     </div>
 
   </div>
@@ -53,11 +117,15 @@
 {% endblock %}
 
 {% block scripts %}
+{{ semanas|json_script:"js-semanas" }}
+{{ semana_fechas|json_script:"js-semana-fechas" }}
+{{ datos_iniciales|json_script:"js-datos-iniciales" }}
 <script>
-var SEMANAS_ORDENADAS     = {{ semanas|safe }};
+var SEMANAS_ORDENADAS     = JSON.parse(document.getElementById('js-semanas').textContent);
 var SEMANA_ACTUAL_DEFAULT = "{{ semana_actual }}";
 var SEMANA_DEFAULT        = "{{ semana_default }}";
-var SEMANA_FECHAS         = {{ semana_fechas }};
+var SEMANA_FECHAS         = JSON.parse(document.getElementById('js-semana-fechas').textContent);
+var DATOS_INICIALES       = JSON.parse(document.getElementById('js-datos-iniciales').textContent);
 </script>
 <script src="{% static 'dashboard/js/resumen.js' %}"></script>
 {% endblock %}

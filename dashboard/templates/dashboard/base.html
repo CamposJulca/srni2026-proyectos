@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}SRNI{% endblock %} — Dashboard SRNI</title>
+  <link rel="icon" href="{% static 'dashboard/img/escudo.png' %}" type="image/png">
   <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
   {% block head_extra %}{% endblock %}
 </head>
@@ -45,6 +46,7 @@
     <!-- NAV MÓDULOS -->
     <nav class="tabs-bar">
       <div class="tabs-inner">
+        {% if es_admin %}
         <a href="/dashboard/" class="tab-btn {% if modulo_activo == 'dashboard' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -73,6 +75,7 @@
           </svg>
           Gestión CRUD
         </a>
+        {% endif %}
         <a href="/actividades/" class="tab-btn {% if modulo_activo == 'actividades' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2"/>
@@ -84,6 +87,14 @@
           </svg>
           Cronograma
         </a>
+        {% if not es_admin %}
+        <a href="/mi-cronograma/" class="tab-btn {% if modulo_activo == 'mi_cronograma' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          Mi Cronograma
+        </a>
+        {% endif %}
       </div>
     </nav>
   </header>

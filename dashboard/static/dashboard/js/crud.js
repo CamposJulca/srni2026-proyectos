@@ -6,6 +6,7 @@ const ICONOS = {
   colaborador: "👤",
   obligacion:  "📋",
   actividad:   "⚡",
+  cuenta_cobro: "💵",
   asignacion:  "🔗",
   modulo:      "📦",
   rol:         "🏷",
@@ -190,6 +191,10 @@ const ETIQUETAS_COL = {
   "actividad_id":                 "ID",
   "estado":                       "Estado",
   "progreso":                     "Progreso",
+  "periodo":                      "Periodo",
+  "numero_cuenta":                "Cuenta",
+  "valor_cobrado":                "Valor cobrado",
+  "fecha_radicacion":             "Radicación",
 }
 
 function etiqueta(col) {
@@ -225,6 +230,12 @@ function renderTabla(cfg, filas, total, page, size) {
       }
       if (col === "honorarios" && val) {
         return `<td class="xls-td-honorarios">$ ${parseFloat(val).toLocaleString("es-CO")}</td>`
+      }
+      if (col === "valor_cobrado" && val) {
+        return `<td class="xls-td-honorarios">$ ${parseFloat(val).toLocaleString("es-CO")}</td>`
+      }
+      if (col === "periodo" && val) {
+        return `<td>${String(val).slice(0, 7)}</td>`
       }
       if (col === "progreso") {
         return `<td><span class="progreso-bar"><span style="width:${val}%"></span></span> ${val}%</td>`

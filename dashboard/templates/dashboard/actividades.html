@@ -5,6 +5,7 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="{% static 'dashboard/css/actividades.css' %}">
+<link rel="stylesheet" href="{% static 'dashboard/css/mi_cronograma.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -19,23 +20,40 @@
       </div>
       <div class="act-toolbar-right">
         <div class="act-filtros">
-          <select id="filtro-colaborador" class="act-select">
-            <option value="">— Selecciona un colaborador —</option>
-            {% for c in colaboradores %}
-            <option value="{{ c }}">{{ c }}</option>
+          <select id="filtro-procedimiento" class="act-select">
+            <option value="">— Procedimiento —</option>
+            {% for p in procedimientos %}
+            <option value="{{ p }}">{{ p }}</option>
+            {% endfor %}
+          </select>
+          <div class="act-search-wrap">
+            <svg class="act-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="filtro-colaborador" class="act-search-input" list="lista-colaboradores" placeholder="Buscar colaborador..." autocomplete="off">
+            <datalist id="lista-colaboradores">
+              {% for c in colaboradores %}
+              <option value="{{ c }}">
+              {% endfor %}
+            </datalist>
+          </div>
+          <select id="filtro-proyecto" class="act-select">
+            <option value="">— Proyecto —</option>
+            {% for p in proyectos %}
+            <option value="{{ p }}">{{ p }}</option>
             {% endfor %}
           </select>
           <select id="filtro-estado" class="act-select">
-            <option value="">Todos los estados</option>
+            <option value="">— Estado —</option>
             <option value="pendiente">Pendiente</option>
             <option value="en_curso">En Curso</option>
             <option value="completada">Completada</option>
             <option value="bloqueada">Bloqueada</option>
           </select>
           <select id="filtro-obligacion" class="act-select">
-            <option value="">Todas las obligaciones</option>
+            <option value="">— Obligación —</option>
             {% for o in obligaciones %}
-            <option value="{{ o }}">{{ o|truncatechars:40 }}</option>
+            <option value="{{ o }}">{{ o|truncatechars:60 }}</option>
             {% endfor %}
           </select>
         </div>
@@ -55,12 +73,14 @@
           </svg>
           Vista Semanal
         </a>
+        {% if es_admin %}
         <button class="act-btn-nuevo" id="btn-nueva-actividad">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
           Nueva actividad
         </button>
+        {% endif %}
       </div>
     </div>
 
@@ -72,6 +92,9 @@
       <div class="act-stat act-stat-completada"><span id="stat-completada">0</span><small>Completadas</small></div>
       <div class="act-stat act-stat-bloqueada"><span id="stat-bloqueada">0</span><small>Bloqueadas</small></div>
     </div>
+
+    <!-- LEYENDA PROYECTOS -->
+    <div class="act-leyenda" id="act-leyenda"></div>
 
     <!-- GANTT CHART -->
     <div class="gantt-wrap" id="gantt-wrap">
@@ -125,7 +148,8 @@
   </div>
 </main>
 
-<!-- MODAL EDITAR / CREAR -->
+<!-- MODAL EDITAR / CREAR (solo admin) -->
+{% if es_admin %}
 <div class="act-modal-overlay" id="act-modal-overlay">
   <div class="act-modal" id="act-modal">
     <div class="act-modal-header">
@@ -185,6 +209,25 @@
           <input type="range" id="modal-progreso" min="0" max="100" value="0">
         </div>
       </div>
+      <!-- EVIDENCIAS -->
+      <div class="act-form-group" id="gantt-evidencias-wrap" style="display:none">
+        <label>Evidencias adjuntas</label>
+        <div class="mic-evidencias-list" id="gantt-evidencias-list">
+          <p class="mic-evidencias-vacio">Sin evidencias</p>
+        </div>
+        <div class="mic-upload-area">
+          <input type="file" id="gantt-upload-input" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip,.rar,.txt,.csv,.pptx">
+          <button type="button" class="act-btn-secundario" id="gantt-btn-upload" style="font-size:0.78rem;height:32px;padding:0 12px;display:flex;align-items:center;gap:5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Subir archivo
+          </button>
+          <input type="text" id="gantt-upload-comentario" placeholder="Comentario (opcional)" class="mic-upload-comment">
+        </div>
+      </div>
+      <div class="mic-modal-warning" id="gantt-modal-warning" style="display:none"></div>
       <div class="act-modal-footer">
         <button type="button" class="act-btn-danger" id="btn-modal-eliminar" style="display:none">Eliminar</button>
         <div style="display:flex;gap:8px;margin-left:auto">
@@ -195,8 +238,12 @@
     </form>
   </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
+<script>
+  const COLABS_POR_PROC = {{ colabs_por_proc_json|safe }};
+</script>
 <script src="{% static 'dashboard/js/actividades.js' %}"></script>
 {% endblock %}

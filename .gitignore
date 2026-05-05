@@ -15,3 +15,9 @@ data/*.csv
 db.sqlite3
 data/clausulados instrumentalizacion/
 data/correos/
+
+# Proyecto separado (neusi-taskmanager)
+taskmanager/
+
+# Archivos subidos por usuarios
+media/

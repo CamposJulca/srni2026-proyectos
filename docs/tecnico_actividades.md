@@ -1,474 +1,334 @@
-# Documento Técnico — Módulo `/actividades/`
-**Sistema:** SRNI 2026 — Dashboard de Instrumentalización
-**URL base:** `https://srni-backend.ngrok.io/actividades/`
-**Fecha:** Marzo 2026
-**Versión:** 1.0
+# Documento Tecnico — Modulo Cronograma `/actividades/`
+
+**Sistema:** SRNI 2026 — Dashboard de Instrumentalizacion  
+**URL base:** `https://srni-backend.ngrok.io/actividades/`  
+**Version:** 2.0  
+**Fecha:** Abril 2026
 
 ---
 
-## 1. Visión General
+## 1. Stack Tecnologico
 
-El módulo de actividades expone tres vistas web y cuatro endpoints de API REST que permiten crear, consultar, actualizar y eliminar actividades del cronograma de los colaboradores del equipo SRNI. El modelo central es `CronogramaActividad`, introducido en la migración `0004` y extendido con el campo `semanas_activas` en `0005`.
+| Capa | Tecnologia |
+|------|------------|
+| Backend | Django 6.0.3 (Python 3.12) |
+| Base de datos | SQLite3 |
+| Frontend | HTML5 + CSS3 + JavaScript vanilla |
+| Servidor | Gunicorn + WhiteNoise (staticos) |
+| Graficos | Chart.js (CDN) |
+| Importacion | openpyxl (Excel), Markdown parser propio |
+| Proxy | ngrok (tunel HTTPS) |
 
 ---
 
-## 2. Modelo de Datos
+## 2. Endpoints API
 
-### 2.1 `CronogramaActividad` (`dashboard/models.py`)
+### Actividades (Gantt)
 
-| Campo | Tipo Django | Notas |
-|---|---|---|
-| `id` | AutoField (PK) | |
-| `colaborador` | CharField(200) | `db_index=True` |
-| `obligacion` | CharField(200) | |
-| `actividad_id` | CharField(20) | Código WBS p.ej. `"1.1"` |
-| `descripcion` | TextField | |
-| `fecha_inicio` | DateField | |
-| `fecha_fin` | DateField | |
-| `progreso` | IntegerField | 0 – 100 |
-| `estado` | CharField(20) | `pendiente` · `en_curso` · `completada` · `bloqueada` |
-| `orden` | IntegerField | Orden de despliegue |
-| `semanas_activas` | JSONField | Lista de códigos de semana: `["ENE S1", "MAR S2", …]` |
+| Endpoint | Metodo | Auth | Descripcion |
+|----------|--------|------|-------------|
+| `/actividades/` | GET | Login | Pagina Gantt (HTML) |
+| `/api/actividades/` | GET | Login | JSON: actividades con filtros |
+| `/api/actividades/crear/` | POST | Admin | Crear actividad |
+| `/api/actividades/<pk>/` | GET/PUT/PATCH/DELETE | Login/Admin | Detalle CRUD |
 
-**Orden por defecto:** `['colaborador', 'orden', 'fecha_inicio']`
+**Parametros GET `/api/actividades/`:**
 
-### 2.2 Lógica de `estado_visual`
+| Param | Tipo | Descripcion |
+|-------|------|-------------|
+| `colaborador` | string | Nombre exacto del colaborador |
+| `estado` | string | pendiente, en_curso, completada, bloqueada |
+| `obligacion` | string | Descripcion exacta de la obligacion |
+| `proyecto` | string | Nombre del proyecto (filtra por asignaciones) |
 
-El campo `estado` almacena el estado manual. Las vistas API calculan un `estado_visual` adicional en tiempo real:
-
-```python
-if fecha_fin < hoy:
-    estado_visual = "vencida"
-elif fecha_inicio <= hoy <= fecha_fin:
-    estado_visual = "en_curso"
-else:
-    estado_visual = estado  # valor guardado en BD
-```
-
-### 2.3 Estructura de `semanas_activas`
-
-Cada actividad almacena exactamente las semanas donde hay trabajo comprometido (sin inferir huecos). Ejemplo:
-
+**Respuesta:**
 ```json
-["ENE S3", "ENE S4", "FEB S1", "FEB S2", "MAR S4"]
-```
-
-El mapa completo de 52 semanas (`SEMANA_FECHAS`) se define en `views.py` y mapea cada código a su rango `(lunes, viernes)`:
-
-```python
-SEMANA_FECHAS = {
-    'ENE S1': ('2026-01-05', '2026-01-09'),
-    'ENE S2': ('2026-01-12', '2026-01-16'),
-    # … 50 semanas más …
-    'DIC S4': ('2026-12-21', '2026-12-25'),
+{
+  "tasks": [{
+    "id": 897,
+    "colaborador": "CRISTHIAM DANIEL CAMPOS JULCA",
+    "obligacion": "Monitorear la asignacion...",
+    "actividad_id": "1.1",
+    "descripcion": "Revision del tablero...",
+    "fecha_inicio": "2026-03-23",
+    "fecha_fin": "2026-12-25",
+    "progreso": 12,
+    "estado": "en_curso",
+    "estado_visual": "en_curso",
+    "orden": 0,
+    "proyecto": null,
+    "proyectos": ["Caracterizacion", "Modelo Integrado", ...]
+  }]
 }
 ```
 
----
+### Vista Semanal
 
-## 3. Endpoints
+| Endpoint | Metodo | Auth | Descripcion |
+|----------|--------|------|-------------|
+| `/actividades/semana/` | GET | Login | Pagina semanal (HTML) |
+| `/api/actividades/semana/` | GET | Login | JSON: actividades por semana |
 
-### 3.1 Resumen de rutas (`dashboard/urls.py`)
+**Parametros GET:**
 
-| Método | URL | Función | Requiere login |
-|---|---|---|---|
-| GET | `/actividades/` | `actividades_view` | ✅ |
-| GET | `/actividades/semana/` | `semana_view` | ✅ |
-| GET | `/actividades/resumen/` | `resumen_view` | ✅ |
-| GET | `/api/actividades/` | `actividades_data` | ✅ |
-| POST | `/api/actividades/crear/` | `actividad_crear` | ✅ |
-| GET/PUT/PATCH/DELETE | `/api/actividades/<pk>/` | `actividad_detalle` | ✅ |
-| GET | `/api/actividades/semana/` | `semana_data` | ✅ |
-| GET | `/api/actividades/resumen/` | `resumen_data` | ✅ |
+| Param | Tipo | Descripcion |
+|-------|------|-------------|
+| `semana` | string | Etiqueta semana (ej: `ABR S3`) |
+| `colaborador` | string | Nombre del colaborador |
+| `procedimiento` | string | Nombre del procedimiento |
 
----
-
-### 3.2 `GET /api/actividades/`
-
-**Función:** `actividades_data(request)`
-
-#### Query params opcionales
-
-| Parámetro | Tipo | Descripción |
-|---|---|---|
-| `colaborador` | string | Filtro exacto por nombre |
-| `estado` | string | `pendiente` · `en_curso` · `completada` · `bloqueada` |
-| `obligacion` | string | Filtro exacto por obligación |
-
-#### Respuesta `200 OK`
-
+**Respuesta:**
 ```json
 {
-  "tasks": [
-    {
-      "id": 42,
-      "colaborador": "Ana Gómez",
-      "obligacion": "Análisis de datos",
-      "actividad_id": "2.3",
-      "descripcion": "Consolidar matriz de indicadores",
+  "semana": "ABR S3",
+  "fecha_inicio": "2026-04-20",
+  "fecha_fin": "2026-04-24",
+  "total_colaboradores": 13,
+  "total_actividades": 117,
+  "grupos": {
+    "COLABORADOR A": [{
+      "id": 901,
+      "actividad_id": "1.1",
+      "descripcion": "...",
+      "obligacion": "...",
+      "estado": "en_curso",
+      "progreso": 45,
       "fecha_inicio": "2026-03-23",
       "fecha_fin": "2026-06-30",
-      "progreso": 15,
-      "estado": "pendiente",
-      "estado_visual": "en_curso"
-    }
-  ]
-}
-```
-
----
-
-### 3.3 `POST /api/actividades/crear/`
-
-**Función:** `actividad_crear(request)`
-
-#### Headers requeridos
-
-```
-Content-Type: application/json
-X-CSRFToken: <token>
-```
-
-#### Cuerpo de solicitud
-
-```json
-{
-  "colaborador": "Ana Gómez",
-  "obligacion": "Análisis de datos",
-  "actividad_id": "2.3",
-  "descripcion": "Consolidar matriz de indicadores",
-  "fecha_inicio": "2026-03-23",
-  "fecha_fin": "2026-06-30",
-  "progreso": 0,
-  "estado": "pendiente"
-}
-```
-
-| Campo | Requerido | Notas |
-|---|---|---|
-| `colaborador` | ✅ | |
-| `obligacion` | ✅ | |
-| `descripcion` | ✅ | |
-| `fecha_inicio` | ✅ | `YYYY-MM-DD` |
-| `fecha_fin` | ✅ | `YYYY-MM-DD` |
-| `actividad_id` | ❌ | Default `""` |
-| `progreso` | ❌ | Default `0` |
-| `estado` | ❌ | Default `"pendiente"` |
-
-#### Respuestas
-
-| Código | Cuerpo | Condición |
-|---|---|---|
-| `200` | `{"ok": true, "id": 42}` | Creación exitosa |
-| `400` | `{"error": "mensaje"}` | Campo requerido faltante o fecha inválida |
-| `405` | `{"error": "método no permitido"}` | Verbo HTTP distinto a POST |
-
----
-
-### 3.4 `GET /api/actividades/<pk>/`
-
-**Función:** `actividad_detalle(request, pk)`
-
-#### Respuesta `200 OK`
-
-```json
-{
-  "id": 42,
-  "colaborador": "Ana Gómez",
-  "obligacion": "Análisis de datos",
-  "actividad_id": "2.3",
-  "descripcion": "Consolidar matriz de indicadores",
-  "fecha_inicio": "2026-03-23",
-  "fecha_fin": "2026-06-30",
-  "progreso": 15,
-  "estado": "pendiente"
-}
-```
-
----
-
-### 3.5 `PUT/PATCH /api/actividades/<pk>/`
-
-Actualización parcial o total. El cuerpo es idéntico al de creación; solo se aplican los campos presentes en el JSON.
-
-#### Respuestas
-
-| Código | Cuerpo | Condición |
-|---|---|---|
-| `200` | `{"ok": true}` | Actualización exitosa |
-| `404` | `{"error": "no encontrada"}` | `pk` no existe |
-
----
-
-### 3.6 `DELETE /api/actividades/<pk>/`
-
-#### Respuestas
-
-| Código | Cuerpo | Condición |
-|---|---|---|
-| `200` | `{"ok": true}` | Eliminación exitosa |
-| `404` | `{"error": "no encontrada"}` | `pk` no existe |
-
----
-
-### 3.7 `GET /api/actividades/semana/`
-
-**Función:** `semana_data(request)`
-
-#### Query params
-
-| Parámetro | Requerido | Ejemplo |
-|---|---|---|
-| `semana` | ✅ | `MAR S1` |
-| `colaborador` | ❌ | `Ana Gómez` |
-
-#### Lógica de filtrado
-
-Selecciona actividades donde el código de semana aparece en el campo `semanas_activas` (JSONField):
-
-```python
-qs = CronogramaActividad.objects.filter(
-    semanas_activas__contains=semana
-)
-```
-
-#### Respuesta `200 OK`
-
-```json
-{
-  "semana": "MAR S1",
-  "fecha_inicio": "2026-03-02",
-  "fecha_fin": "2026-03-06",
-  "total_colaboradores": 5,
-  "total_actividades": 12,
-  "grupos": {
-    "Ana Gómez": [
-      {
-        "id": 42,
-        "actividad_id": "2.3",
-        "descripcion": "Consolidar matriz de indicadores",
-        "obligacion": "Análisis de datos",
-        "estado": "pendiente",
-        "progreso": 15,
-        "fecha_inicio": "2026-03-02",
-        "fecha_fin": "2026-03-20",
-        "total_semanas": 3,
-        "semana_num": 1
-      }
-    ]
+      "total_semanas": 14,
+      "semana_num": 5
+    }]
   }
 }
 ```
 
----
+### Resumen General
 
-### 3.8 `GET /api/actividades/resumen/`
+| Endpoint | Metodo | Auth | Descripcion |
+|----------|--------|------|-------------|
+| `/actividades/resumen/` | GET | Login | Pagina resumen (HTML) |
+| `/api/actividades/resumen/` | GET | Login | JSON: KPIs semanales |
 
-**Función:** `resumen_data(request)`
+**Parametros GET:**
 
-#### Query params
+| Param | Tipo | Descripcion |
+|-------|------|-------------|
+| `semana` | string | Etiqueta semana |
+| `procedimiento` | string | Filtro por procedimiento |
 
-| Parámetro | Requerido | Ejemplo |
-|---|---|---|
-| `semana` | ✅ | `MAR S1` |
-
-#### Respuesta `200 OK`
-
+**Respuesta:**
 ```json
-{ "total": 42 }
+{
+  "total": 117,
+  "completadas": 4,
+  "en_curso": 98,
+  "pendientes": 15,
+  "bloqueadas": 0,
+  "avance": 42.6,
+  "colaboradores": [{
+    "nombre": "LUIS MIGUEL RAMIREZ",
+    "total": 2,
+    "completadas": 1,
+    "en_curso": 1,
+    "pendientes": 0,
+    "bloqueadas": 0,
+    "avance": 78.5
+  }]
+}
+```
+
+### Mi Cronograma
+
+| Endpoint | Metodo | Auth | Descripcion |
+|----------|--------|------|-------------|
+| `/mi-cronograma/` | GET | Login+Perfil | Pagina personal (HTML) |
+| `/api/mi-cronograma/` | GET | Login+Perfil | JSON: actividades propias |
+| `/api/mi-cronograma/<pk>/` | POST | Login+Dueno | Actualizar progreso/estado |
+
+### Evidencias
+
+| Endpoint | Metodo | Auth | Descripcion |
+|----------|--------|------|-------------|
+| `/api/evidencias/<act_pk>/` | GET | Login | Listar evidencias |
+| `/api/evidencias/<act_pk>/subir/` | POST | Dueno/Admin | Subir archivo (multipart, max 10MB) |
+| `/api/evidencias/eliminar/<pk>/` | POST | Creador/Admin | Eliminar evidencia |
+
+### Reportes Semanales
+
+| Endpoint | Metodo | Auth | Descripcion |
+|----------|--------|------|-------------|
+| `/api/reporte-semanal/` | GET | Login | Reportes del colaborador logueado |
+| `/api/reporte-semanal/guardar/` | POST | Login+Perfil | Crear/actualizar reporte |
+| `/api/reportes-admin/` | GET | Admin | Todos los reportes |
+
+---
+
+## 3. Modelos de Datos
+
+### Actividad (modelo central)
+
+```python
+class Actividad(models.Model):
+    obligacion     = ForeignKey(Obligacion, CASCADE)       # REQUERIDO
+    proyecto       = ForeignKey(Proyecto, SET_NULL, null)   # Opcional
+    actividad_id   = CharField(max_length=20, blank)       # "1.1", "2.3"
+    descripcion    = TextField()                           # REQUERIDO
+    fecha_inicio   = DateField()                           # REQUERIDO
+    fecha_fin      = DateField()                           # REQUERIDO
+    progreso       = IntegerField(default=0)               # 0-100
+    estado         = CharField(choices=ESTADO_CHOICES)     # pendiente|en_curso|completada|bloqueada
+    orden          = IntegerField(default=0)               # Orden de visualizacion
+    semanas_activas = JSONField(default=list)              # ["MAR S4", "ABR S1", ...]
+    evidencia      = TextField(null, blank)                # Texto libre entregables
+```
+
+### Obligacion
+
+```python
+class Obligacion(models.Model):
+    colaborador = ForeignKey(Colaborador, CASCADE)
+    descripcion = TextField()
+```
+
+### EvidenciaActividad
+
+```python
+class EvidenciaActividad(models.Model):
+    actividad   = ForeignKey(Actividad, CASCADE, related_name='evidencias')
+    archivo     = FileField(upload_to='evidencias/%Y/%m/')
+    comentario  = TextField(blank)
+    creado_por  = ForeignKey(User, SET_NULL, null)
+    creado_en   = DateTimeField(auto_now_add)
+```
+
+### ReporteSemanal
+
+```python
+class ReporteSemanal(models.Model):
+    colaborador  = ForeignKey(Colaborador, CASCADE)
+    semana       = CharField(max_length=10)          # "ABR S3"
+    que_hizo     = TextField()
+    impedimentos = TextField(blank)
+    # unique_together: (colaborador, semana)
+```
+
+### Diagrama de relaciones
+
+```
+Procedimiento
+    |
+Colaborador ──── Perfil ──── User
+    |
+    ├── Obligacion
+    |       |
+    |       └── Actividad ──── EvidenciaActividad
+    |               |
+    |               └── Proyecto (opcional)
+    |
+    ├── Asignacion ──── Modulo ──── Proyecto
+    |                       |
+    |                       └── Rol
+    |
+    ├── CuentaCobro
+    └── ReporteSemanal
 ```
 
 ---
 
-## 4. Vistas Web
+## 4. Comandos de Gestion
 
-### 4.1 `/actividades/` — Diagrama de Gantt
-
-**Template:** `dashboard/templates/dashboard/actividades.html`
-**CSS:** `dashboard/static/dashboard/css/actividades.css`
-**JS:** `dashboard/static/dashboard/js/actividades.js`
-
-#### Componentes de la interfaz
-
-| Componente | Clase CSS | Descripción |
-|---|---|---|
-| Barra de filtros | `.gantt-toolbar` | Selector colaborador, estado, obligación |
-| KPIs | `.stats-bar` | Totales por estado |
-| Cabecera del Gantt | `.gantt-header` | Meses y semanas (sticky) |
-| Filas del Gantt | `.gantt-row` / `.gantt-bar` | Una barra por actividad |
-| Tabla de detalle | `#tabla-actividades` | Vista tabular paralela |
-| Modal | `#modal-actividad` | Formulario crear / editar |
-
-#### Cálculo de posición de barras
-
-La línea de tiempo abarca el año 2026 completo (365 días). Cada semana ocupa `52 px`:
-
-```javascript
-const SEM_W = 52;                    // px por semana
-const TOTAL_DIAS = 365;
-
-function diaDesdeInicio(fechaStr) {
-    const d = new Date(fechaStr);
-    const ini = new Date('2026-01-01');
-    return Math.round((d - ini) / 86400000);
-}
-
-function fechaALeft(fechaStr) {
-    return (diaDesdeInicio(fechaStr) / 7) * SEM_W;
-}
-
-function fechaAWidth(inicioStr, finStr) {
-    const dias = diaDesdeInicio(finStr) - diaDesdeInicio(inicioStr) + 1;
-    return Math.max((dias / 7) * SEM_W, 8);
-}
-```
-
-#### Asignación de colores
-
-```javascript
-const PALETA = [
-    '#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f',
-    '#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ac',
-    // … 10 más
-];
-
-function colorColaborador(nombre) {
-    const idx = [...nombre].reduce((a, c) => a + c.charCodeAt(0), 0) % PALETA.length;
-    return PALETA[idx];
-}
-```
-
----
-
-### 4.2 `/actividades/semana/` — Vista Semanal
-
-**Template:** `dashboard/templates/dashboard/semana.html`
-**CSS:** `dashboard/static/dashboard/css/semana.css`
-**JS:** `dashboard/static/dashboard/js/semana.js`
-
-| Elemento | Descripción |
-|---|---|
-| Navegador de semanas | Botones `<` `>` + `select` + botón "Esta semana" |
-| Tarjetas por colaborador | Grid auto-fill (`min-width: 340px`) |
-| Ítem de tarea | Dot de color, descripción, badge `Sem X/Y`, barra de progreso, check rápido |
-| Modal de edición | Dropdown de estado + slider de progreso |
-
-#### Flujo de actualización rápida (check)
-
-```
-Click ✓ → PUT /api/actividades/<id>/ {estado: 'completada', progreso: 100}
-         → cargarSemana() recarga la vista
-```
-
----
-
-### 4.3 `/actividades/resumen/` — Dashboard Gerencial
-
-**Template:** `dashboard/templates/dashboard/resumen.html`
-**JS:** `dashboard/static/dashboard/js/resumen.js`
-
-Muestra un único número grande: total de actividades comprometidas en la semana seleccionada. Diseñado para revisión rápida por parte de la Subdirección.
-
----
-
-## 5. Comando de Importación
-
-**Ubicación:** `dashboard/management/commands/importar_cronogramas.py`
+### Importar cronogramas
 
 ```bash
-# Importar sin borrar datos existentes
-python manage.py importar_cronogramas
-
-# Reimportar desde cero
 python manage.py importar_cronogramas --limpiar
 ```
 
-### 5.1 Fuentes de datos
+- Lee archivos `.md` de `data/Cronogramas_actividades/`
+- Detecta 4 formatos automaticamente (secciones, WBS, tabla plana, tabla sin secciones)
+- Matching de nombres: sin acentos, case-insensitive, busqueda parcial
+- Crea Obligacion + Actividad con semanas_activas
 
-Archivos Markdown en `data/Cronogramas_actividades/<NombreColaborador>.md`.
+### Calcular progreso
 
-### 5.2 Formatos soportados
-
-| Formato | Cabeceras detectadas | Descripción |
-|---|---|---|
-| **Secciones + tabla** | `### N. Obligación` + tabla | Tabla por cada sección de obligación |
-| **WBS con fechas** | `WBS`, `Inicio`, `Finalización`, `%` | Fechas explícitas, progreso en columna |
-| **Obligación + Actividad + Semanas** | `Obligación`, `Actividad` + columnas de semana | Combinado con ✅ |
-| **Tabla plana** | `#`, `Actividad` + columnas de semana | Formato más frecuente |
-
-### 5.3 Proceso de parsing
-
+```bash
+python manage.py calcular_progreso [--forzar]
 ```
-Leer .md → Detectar formato → Iterar filas
-→ Extraer actividad_id, descripcion, obligacion
-→ Identificar columnas que son códigos de semana (ENE S1, FEB S3…)
-→ Registrar semanas con ✅ → semanas_activas
-→ fecha_inicio = SEMANA_FECHAS[primera semana activa][0]
-→ fecha_fin   = SEMANA_FECHAS[última semana activa][1]
-→ Crear CronogramaActividad(estado='pendiente', progreso=0)
+
+- Calcula progreso basado en dias transcurridos vs dias totales
+- Asigna estado coherente: 0% = pendiente, 1-99% = en_curso, 100% = completada
+- `--forzar`: recalcula incluso actividades con progreso > 0
+
+---
+
+## 5. Logica de Semana Actual
+
+```python
+def _semana_actual():
+    hoy = date.today()
+    # Buscar semana que contiene la fecha actual
+    for sem, (ini, fin) in SEMANA_FECHAS.items():
+        if date.fromisoformat(ini) <= hoy <= date.fromisoformat(fin):
+            return sem
+    # Fallback: proxima semana mas cercana
+    for sem in SEMANAS_ORDENADAS:
+        if date.fromisoformat(SEMANA_FECHAS[sem][0]) >= hoy:
+            return sem
+    return SEMANAS_ORDENADAS[-1]
 ```
 
 ---
 
-## 6. Seguridad
+## 6. Coloreo por Proyecto (Frontend)
 
-| Mecanismo | Implementación |
-|---|---|
-| Autenticación | `@login_required` en todas las vistas y APIs |
-| CSRF | Token en cookie; `X-CSRFToken` header requerido en POST/PUT/DELETE |
-| Hosts permitidos | `ALLOWED_HOSTS` + `CSRF_TRUSTED_ORIGINS` incluyen `srni-backend.ngrok.io` |
-| Autorización | Sin RBAC; todo usuario autenticado accede a todos los datos |
-
----
-
-## 7. Stack Tecnológico
-
-| Capa | Tecnología | Versión |
-|---|---|---|
-| Framework web | Django | 6.0.3 |
-| Base de datos | SQLite | — |
-| Servidor WSGI | Gunicorn | 25.1.0 |
-| Archivos estáticos | WhiteNoise | 6.12.0 |
-| Frontend | HTML5 + CSS3 + JavaScript ES6 | Vanilla (sin frameworks) |
-
----
-
-## 8. Migraciones
-
-| Migración | Fecha | Cambio |
-|---|---|---|
-| `0004_cronogramaactividad` | 2026-03-30 02:32 | Crea tabla `CronogramaActividad` con campos base |
-| `0005_cronogramaactividad_semanas_activas` | 2026-03-30 02:41 | Agrega campo `semanas_activas` (JSONField) |
-
----
-
-## 9. Estructura de Archivos del Módulo
-
+```javascript
+const COLORES_PROYECTO = {
+  'VIVANTO':                         '#003087',
+  'Caracterizacion':                 '#00875a',
+  'Modelo Integrado':                '#CE1126',
+  'Nuevo Ruv':                       '#7c3aed',
+  'Ruv Temporal-Sirav-Sipod':        '#0891b2',
+  'Transformacion Ficha Estrategica':'#d97706',
+};
 ```
-dashboard/
-├── models.py                          # Modelo CronogramaActividad
-├── views.py                           # actividades_view, actividades_data,
-│                                      # actividad_crear, actividad_detalle,
-│                                      # semana_view, semana_data,
-│                                      # resumen_view, resumen_data
-├── urls.py                            # 8 rutas del módulo actividades
-├── management/
-│   └── commands/
-│       └── importar_cronogramas.py    # Importador Markdown → BD
-├── migrations/
-│   ├── 0004_cronogramaactividad.py
-│   └── 0005_cronogramaactividad_semanas_activas.py
-├── templates/dashboard/
-│   ├── actividades.html               # Vista Gantt
-│   ├── semana.html                    # Vista semanal
-│   └── resumen.html                   # Dashboard gerencial
-└── static/dashboard/
-    ├── css/
-    │   ├── actividades.css
-    │   ├── semana.css
-    │   └── resumen.css
-    └── js/
-        ├── actividades.js
-        ├── semana.js
-        └── resumen.js
-```
+
+**Logica de asignacion:**
+1. Si hay filtro de proyecto activo: todas las barras con ese color
+2. Si la actividad tiene proyecto directo (`Actividad.proyecto`): color del proyecto
+3. Si el colaborador tiene un solo proyecto asignado: color de ese proyecto
+4. Si tiene multiples: color por obligacion (ciclo de paleta)
+
+---
+
+## 7. Archivos del Modulo
+
+| Archivo | Lineas | Funcion |
+|---------|--------|---------|
+| `views.py` | ~1600 | Vistas y APIs |
+| `models.py` | 257 | Modelos de datos |
+| `urls.py` | 59 | Rutas |
+| `permisos.py` | 49 | Decoradores de acceso |
+| `importar_cronogramas.py` | 560 | Importador Markdown |
+| `calcular_progreso.py` | 52 | Calculo automatico de progreso |
+| `actividades.js` | ~530 | Gantt + modal + evidencias |
+| `semana.js` | ~400 | Vista semanal |
+| `resumen.js` | ~140 | Dashboard KPIs |
+| `mi_cronograma.js` | ~350 | Autoservicio |
+| `actividades.css` | ~650 | Estilos Gantt |
+| `semana.css` | ~300 | Estilos semanal |
+| `resumen.css` | ~430 | Estilos resumen |
+| `mi_cronograma.css` | ~250 | Estilos autoservicio |
+
+---
+
+## 8. Validaciones y Restricciones
+
+| Regla | Nivel | Ubicacion |
+|-------|-------|-----------|
+| Actividad requiere obligacion FK | DB NOT NULL | `models.py` |
+| Completar requiere evidencia | Vista | `actividad_detalle()`, `mi_actividad_update()` |
+| Evidencia max 10MB | Vista | `evidencia_subir()` |
+| Progreso 0-100 | Vista | `mi_actividad_update()` |
+| (colaborador, semana) unico en ReporteSemanal | DB | `models.py` |
+| (colaborador, periodo) unico en CuentaCobro | DB | `models.py` |
+| Nombre de Colaborador unico | DB | `models.py` |
+| SQL: solo SELECT, sin DROP/ALTER | Vista regex | `sql_query()` |

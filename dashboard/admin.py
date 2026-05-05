@@ -8,6 +8,10 @@ from .models import (
     Asignacion,
     Obligacion,
     Actividad,
+    CuentaCobro,
+    Perfil,
+    EvidenciaActividad,
+    ReporteSemanal,
 )
 
 admin.site.register(Procedimiento)
@@ -18,3 +22,7 @@ admin.site.register(Rol)
 admin.site.register(Asignacion)
 admin.site.register(Obligacion)
 admin.site.register(Actividad)
+admin.site.register(CuentaCobro)
+admin.site.register(Perfil)
+admin.site.register(EvidenciaActividad)
+admin.site.register(ReporteSemanal)

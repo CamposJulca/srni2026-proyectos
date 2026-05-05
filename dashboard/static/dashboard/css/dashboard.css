@@ -560,6 +560,94 @@ canvas { max-width: 100%; }
   white-space: nowrap;
 }
 
+/* ============================================================
+   CRUCE COBRO VS CUMPLIMIENTO
+   ============================================================ */
+.cruce-periodo {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--texto-s);
+  background: var(--gris-1);
+  border: 1px solid var(--gris-2);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.cruce-cobro-wrap {
+  overflow-x: auto;
+}
+
+.cruce-cobro-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.cruce-cobro-tabla th {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--gris-2);
+  color: var(--texto-s);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+.cruce-cobro-tabla td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--gris-2);
+  white-space: nowrap;
+}
+
+.cruce-cobro-tabla tbody tr:hover td {
+  background: var(--gris-1);
+}
+
+.cruce-subdato {
+  font-size: 0.75rem;
+  color: var(--texto-s);
+}
+
+.cruce-brecha-ok {
+  color: var(--verde);
+  font-weight: 700;
+}
+
+.cruce-brecha-alerta {
+  color: var(--rojo);
+  font-weight: 700;
+}
+
+.cruce-estado {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.cruce-estado-alineado {
+  color: #065f46;
+  background: #d1fae5;
+}
+
+.cruce-estado-alerta {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.cruce-estado-desalineado,
+.cruce-estado-rechazada {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.cruce-estado-sin_cuenta {
+  color: #374151;
+  background: #e5e7eb;
+}
+
 .close {
   position: absolute;
   top: 14px;

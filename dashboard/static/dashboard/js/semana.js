@@ -91,6 +91,14 @@ function renderGrupos(grupos) {
       const checkClass = esCompletada ? 'completada' : '';
       const progColor = estadoColor(a.estado);
 
+      const checkBtn = (typeof ES_ADMIN !== 'undefined' && ES_ADMIN)
+        ? `<button class="sem-item-check ${checkClass}" data-id="${a.id}" title="${esCompletada ? 'Marcar pendiente' : 'Marcar completada'}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </button>`
+        : '';
+
       return `
         <div class="sem-item" data-id="${a.id}">
           <span class="sem-item-estado estado-dot-${a.estado}"></span>
@@ -107,11 +115,7 @@ function renderGrupos(grupos) {
               <span class="sem-item-prog-pct">${a.progreso}%</span>
             </div>
           </div>
-          <button class="sem-item-check ${checkClass}" data-id="${a.id}" title="${esCompletada ? 'Marcar pendiente' : 'Marcar completada'}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          </button>
+          ${checkBtn}
         </div>`;
     }).join('');
 
@@ -135,14 +139,16 @@ function renderGrupos(grupos) {
       </div>`;
   }).join('');
 
-  // Eventos: click en item → modal editar
-  grid.querySelectorAll('.sem-item').forEach(el => {
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('.sem-item-check')) return;
-      const id = parseInt(el.dataset.id);
-      abrirModal(id, grupos);
+  // Eventos: click en item → modal editar (solo admin)
+  if (typeof ES_ADMIN !== 'undefined' && ES_ADMIN) {
+    grid.querySelectorAll('.sem-item').forEach(el => {
+      el.addEventListener('click', (e) => {
+        if (e.target.closest('.sem-item-check')) return;
+        const id = parseInt(el.dataset.id);
+        abrirModal(id, grupos);
+      });
     });
-  });
+  }
 
   // Click en check → toggle completada
   grid.querySelectorAll('.sem-item-check').forEach(btn => {
@@ -178,6 +184,8 @@ async function cargarSemana() {
 
   const params = new URLSearchParams({ semana });
   if (colab) params.set('colaborador', colab);
+  const procEl = document.getElementById('filtro-procedimiento-sem');
+  if (procEl && procEl.value) params.set('procedimiento', procEl.value);
 
   let data;
   try {
@@ -235,11 +243,15 @@ document.getElementById('btn-hoy').addEventListener('click', () => {
 
 document.getElementById('sel-semana').addEventListener('change', cargarSemana);
 document.getElementById('filtro-colaborador-sem').addEventListener('change', cargarSemana);
+var procSemEl = document.getElementById('filtro-procedimiento-sem');
+if (procSemEl) procSemEl.addEventListener('change', cargarSemana);
 
 // ============================================================
 //  MODAL EDITAR
 // ============================================================
 const overlay = document.getElementById('act-modal-overlay');
+
+let currentSemActId = null;
 
 function abrirModal(id, grupos) {
   // Buscar la actividad en todos los grupos
@@ -250,6 +262,7 @@ function abrirModal(id, grupos) {
   }
   if (!act) return;
 
+  currentSemActId = id;
   document.getElementById('modal-id').value = id;
   document.getElementById('modal-desc-texto').textContent = act.descripcion;
   document.getElementById('modal-oblig-texto').textContent = act.obligacion;
@@ -259,7 +272,11 @@ function abrirModal(id, grupos) {
   document.getElementById('act-modal-titulo').textContent =
     (act.actividad_id ? `[${act.actividad_id}] ` : '') + 'Actualizar actividad';
 
+  const warn = document.getElementById('sem-modal-warning');
+  if (warn) warn.style.display = 'none';
+
   overlay.classList.add('visible');
+  cargarEvidenciasSem(id);
 }
 
 document.getElementById('modal-progreso').addEventListener('input', e => {
@@ -285,7 +302,111 @@ document.getElementById('act-modal-form').addEventListener('submit', async e => 
   if (res.ok) {
     overlay.classList.remove('visible');
     cargarSemana();
+  } else {
+    const data = await res.json();
+    const warn = document.getElementById('sem-modal-warning');
+    if (warn) {
+      warn.textContent = data.error || 'Error al guardar';
+      warn.style.display = 'block';
+    }
   }
 });
+
+// ============================================================
+//  EVIDENCIAS en modal admin
+// ============================================================
+
+async function cargarEvidenciasSem(actId) {
+  const lista = document.getElementById('sem-evidencias-list');
+  if (!lista) return;
+  lista.innerHTML = '<p class="mic-evidencias-vacio">Cargando...</p>';
+
+  try {
+    const res = await fetch(`/api/evidencias/${actId}/`);
+    const data = await res.json();
+
+    if (data.evidencias.length === 0) {
+      lista.innerHTML = '<p class="mic-evidencias-vacio">Sin evidencias adjuntas</p>';
+      return;
+    }
+
+    lista.innerHTML = data.evidencias.map(ev => `
+      <div class="mic-ev-item">
+        <a href="${ev.archivo_url}" target="_blank" class="mic-ev-link" title="${ev.nombre}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span>${ev.nombre}</span>
+        </a>
+        <span class="mic-ev-meta">${ev.creado_por} · ${ev.creado_en}${ev.comentario ? ' — ' + ev.comentario : ''}</span>
+        <button type="button" class="mic-ev-del" data-id="${ev.id}" title="Eliminar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    `).join('');
+
+    lista.querySelectorAll('.mic-ev-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Eliminar esta evidencia?')) return;
+        await fetch(`/api/evidencias/eliminar/${btn.dataset.id}/`, {
+          method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        });
+        cargarEvidenciasSem(actId);
+      });
+    });
+  } catch {
+    lista.innerHTML = '<p class="mic-evidencias-vacio">Error al cargar</p>';
+  }
+}
+
+// Upload de archivos en modal admin
+const semUploadBtn = document.getElementById('sem-btn-upload');
+const semUploadInput = document.getElementById('sem-upload-input');
+
+if (semUploadBtn && semUploadInput) {
+  semUploadBtn.addEventListener('click', () => semUploadInput.click());
+
+  semUploadInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert('El archivo no puede superar 10MB');
+      e.target.value = '';
+      return;
+    }
+
+    const comentario = document.getElementById('sem-upload-comentario').value.trim();
+    const formData = new FormData();
+    formData.append('archivo', file);
+    formData.append('comentario', comentario);
+
+    semUploadBtn.disabled = true;
+    semUploadBtn.textContent = 'Subiendo...';
+
+    try {
+      const res = await fetch(`/api/evidencias/${currentSemActId}/subir/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        body: formData,
+      });
+      if (res.ok) {
+        document.getElementById('sem-upload-comentario').value = '';
+        cargarEvidenciasSem(currentSemActId);
+      } else {
+        const d = await res.json();
+        alert(d.error || 'Error al subir');
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    } finally {
+      semUploadBtn.disabled = false;
+      semUploadBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Subir archivo`;
+      e.target.value = '';
+    }
+  });
+}
 
 cargarSemana();

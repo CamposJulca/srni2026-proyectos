@@ -1,0 +1,325 @@
+/* ============================================================
+   MI CRONOGRAMA — estilos self-service
+   ============================================================ */
+
+.mic-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--texto-s);
+  cursor: pointer;
+  user-select: none;
+}
+.mic-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--azul);
+}
+
+/* --- Cards por obligacion --- */
+.mic-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 40px;
+}
+
+.mic-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.mic-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, var(--azul) 0%, #1e40af 100%);
+  color: #fff;
+}
+.mic-card-oblig {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.4;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mic-card-badge {
+  font-size: 0.72rem;
+  background: rgba(255,255,255,0.2);
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  margin-left: 12px;
+}
+
+.mic-card-body {
+  padding: 6px 12px;
+}
+
+.mic-card-footer {
+  padding: 10px 18px;
+  border-top: 1px solid var(--gris-2);
+}
+
+/* --- Items (actividades) --- */
+.mic-item {
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--gris-2);
+}
+.mic-item:last-child { border-bottom: none; }
+.mic-item:hover { background: var(--gris-1); }
+
+.mic-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.mic-item-badge {
+  font-size: 0.68rem;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.mic-item-id {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--azul);
+}
+.mic-item-fechas {
+  font-size: 0.72rem;
+  color: var(--texto-s);
+  margin-left: auto;
+}
+
+.mic-item-desc {
+  font-size: 0.82rem;
+  color: var(--texto);
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+
+.mic-item-prog {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mic-item-prog-bg {
+  flex: 1;
+  height: 6px;
+  background: var(--gris-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.mic-item-prog-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+.mic-item-prog-pct {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--texto-s);
+  min-width: 32px;
+  text-align: right;
+}
+
+.mic-item-evidencia {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--texto-s);
+  background: var(--gris-1);
+  padding: 6px 10px;
+  border-radius: 6px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* --- Modal evidencia textarea --- */
+#mic-modal-evidencia {
+  width: 100%;
+  border: 1px solid var(--gris-2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.15s;
+}
+#mic-modal-evidencia:focus {
+  outline: none;
+  border-color: var(--azul);
+  box-shadow: 0 0 0 3px rgba(0,48,135,0.1);
+}
+
+.mic-readonly-field {
+  font-size: 0.82rem;
+  color: var(--texto);
+  padding: 6px 0;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* --- Modal mas ancho para evidencias --- */
+.mic-modal-wide {
+  max-width: 640px;
+}
+
+/* --- Evidencias lista en modal --- */
+.mic-evidencias-list {
+  background: var(--gris-1);
+  border-radius: 8px;
+  padding: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.mic-evidencias-vacio {
+  font-size: 0.78rem;
+  color: var(--texto-s);
+  text-align: center;
+  padding: 8px;
+  margin: 0;
+}
+
+.mic-ev-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.1s;
+}
+.mic-ev-item:hover { background: var(--gris-2); }
+
+.mic-ev-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--azul);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  flex-shrink: 0;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mic-ev-link:hover { text-decoration: underline; }
+
+.mic-ev-meta {
+  font-size: 0.7rem;
+  color: var(--texto-s);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mic-ev-del {
+  background: none;
+  border: none;
+  color: var(--texto-s);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.mic-ev-del:hover { background: #fee2e2; color: var(--rojo); }
+
+/* --- Upload area --- */
+.mic-upload-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.mic-upload-comment {
+  flex: 1;
+  min-width: 150px;
+  border: 1px solid var(--gris-2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-family: inherit;
+}
+.mic-upload-comment:focus {
+  outline: none;
+  border-color: var(--azul);
+}
+
+/* --- Warning en modal --- */
+.mic-modal-warning {
+  font-size: 0.78rem;
+  color: var(--rojo);
+  background: #fef2f2;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+/* --- Reporte semanal --- */
+.mic-reporte-wrap {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.mic-reporte-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+  color: #fff;
+}
+.mic-reporte-header h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+}
+.mic-reporte-status {
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.mic-reporte-saved {
+  background: rgba(255,255,255,0.25);
+}
+.mic-reporte-pending {
+  background: rgba(255,255,255,0.15);
+}
+.mic-reporte-body {
+  padding: 14px 18px;
+}
+.mic-reporte-body textarea {
+  width: 100%;
+  border: 1px solid var(--gris-2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  resize: vertical;
+}
+.mic-reporte-body textarea:focus {
+  outline: none;
+  border-color: #047857;
+  box-shadow: 0 0 0 3px rgba(4,120,87,0.1);
+}

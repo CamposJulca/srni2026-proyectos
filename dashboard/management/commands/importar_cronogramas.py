@@ -12,8 +12,17 @@ Guarda semanas_activas: lista exacta de semanas con ✅ (sin gaps).
 
 import os
 import re
+import unicodedata
 from django.core.management.base import BaseCommand
-from dashboard.models import CronogramaActividad
+from dashboard.models import Actividad, Obligacion, Colaborador
+
+
+def strip_accents(s):
+    """Elimina acentos para comparación flexible de nombres."""
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', s)
+        if unicodedata.category(c) != 'Mn'
+    )
 
 
 # Mapeo semana → (fecha_inicio, fecha_fin)
@@ -80,7 +89,7 @@ MES_NOMBRE_A_NUM = {
 FECHA_A_SEMANA = {v[0]: k for k, v in SEMANAS.items()}
 
 NOMBRE_CANONICO = {
-    'Daniel Avendaño': 'Daniel Felipe Avendaño Pulido',
+    'Daniel Avendaño': 'Daniel Felipe Avendaño Puin',
 }
 
 
@@ -478,7 +487,7 @@ class Command(BaseCommand):
             return
 
         if options['limpiar']:
-            deleted, _ = CronogramaActividad.objects.all().delete()
+            deleted, _ = Actividad.objects.all().delete()
             self.stdout.write(f"  Eliminadas {deleted} actividades existentes.")
 
         archivos = sorted(f for f in os.listdir(data_dir) if f.endswith('.md'))
@@ -488,10 +497,46 @@ class Command(BaseCommand):
             filepath = os.path.join(data_dir, archivo)
             try:
                 persona, actividades = parsear_archivo(filepath)
+
+                # Buscar el Colaborador por nombre (sin acentos, case-insensitive)
+                persona_norm = strip_accents(persona).upper()
+                colaborador_obj = None
+                for c in Colaborador.objects.all():
+                    if strip_accents(c.nombre).upper() == persona_norm:
+                        colaborador_obj = c
+                        break
+
+                if not colaborador_obj:
+                    # Búsqueda parcial: comparar todas las palabras del nombre
+                    palabras = persona_norm.split()
+                    for c in Colaborador.objects.all():
+                        c_norm = strip_accents(c.nombre).upper()
+                        if all(p in c_norm for p in palabras):
+                            colaborador_obj = c
+                            break
+
+                if not colaborador_obj:
+                    self.stderr.write(
+                        self.style.WARNING(
+                            f"  ⚠ {persona}: no se encontró Colaborador. Saltando."
+                        )
+                    )
+                    continue
+
+                # Cache de obligaciones ya creadas para este colaborador
+                obligaciones_cache = {}
+
                 for a in actividades:
-                    CronogramaActividad.objects.create(
-                        colaborador=a['colaborador'],
-                        obligacion=a['obligacion'],
+                    oblig_desc = a['obligacion']
+                    if oblig_desc not in obligaciones_cache:
+                        oblig_obj, _ = Obligacion.objects.get_or_create(
+                            colaborador=colaborador_obj,
+                            descripcion=oblig_desc,
+                        )
+                        obligaciones_cache[oblig_desc] = oblig_obj
+
+                    Actividad.objects.create(
+                        obligacion=obligaciones_cache[oblig_desc],
                         actividad_id=a.get('actividad_id', ''),
                         descripcion=a['descripcion'],
                         fecha_inicio=a['fecha_inicio'],
@@ -501,8 +546,11 @@ class Command(BaseCommand):
                         estado='pendiente',
                         orden=a.get('orden', 0),
                     )
+
                 n = len(actividades)
-                self.stdout.write(self.style.SUCCESS(f"  ✓ {persona}: {n} actividades"))
+                self.stdout.write(self.style.SUCCESS(
+                    f"  ✓ {colaborador_obj.nombre}: {n} actividades"
+                ))
                 total += n
             except Exception as e:
                 import traceback

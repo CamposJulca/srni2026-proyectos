@@ -67,6 +67,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'dashboard.permisos.user_role',
             ],
         },
     },
@@ -125,6 +126,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 CSRF_TRUSTED_ORIGINS = [
     "https://srni-backend.ngrok.io"
 ]
@@ -132,3 +136,6 @@ CSRF_TRUSTED_ORIGINS = [
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# Mantiene compatibilidad con migraciones históricas que usan AutoField.
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"

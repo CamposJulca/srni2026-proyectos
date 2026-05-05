@@ -1,171 +1,169 @@
-# Documento Funcional — Módulo Cronograma de Actividades
-**Sistema:** SRNI 2026 — Dashboard de Instrumentalización
-**Fecha:** Marzo 2026
-**Versión:** 1.0
+# Documento Funcional — Modulo Cronograma de Actividades
+
+**Sistema:** SRNI 2026 — Dashboard de Instrumentalizacion  
+**URL:** `https://srni-backend.ngrok.io/actividades/`  
+**Version:** 2.0  
+**Fecha:** Abril 2026
 
 ---
 
-## 1. Propósito
+## 1. Objetivo
 
-El módulo de **Cronograma de Actividades** permite al equipo de Instrumentalización de la Subdirección Red Nacional de Información (SRNI) registrar, visualizar y hacer seguimiento semanal a los compromisos contractuales de cada colaborador durante el año 2026. La herramienta centraliza la información que antes existía en documentos Markdown dispersos y la convierte en una interfaz interactiva de seguimiento en tiempo real.
-
----
-
-## 2. Alcance
-
-- **Período cubierto:** Enero – Diciembre 2026 (48 semanas hábiles)
-- **Colaboradores activos:** 13
-- **Total compromisos cargados:** 200 actividades
-- **Audiencia principal:** Subdirector(a) y equipo de Instrumentalización
+Planificar, hacer seguimiento y controlar las actividades de los colaboradores de la Subdireccion de la Red Nacional de Informacion (SRNI), integrando obligaciones contractuales, cronogramas semanales, evidencias y reportes narrativos.
 
 ---
 
-## 3. Colaboradores incluidos
+## 2. Roles y Permisos
 
-| Colaborador | Actividades |
-|---|---|
-| Cristhiam Daniel Campos Julca | 26 |
-| Daniel Felipe Avendaño Pulido | 37 |
-| David Alonso Ladino Medina | 29 |
-| Diego Fernando Orjuela Vinchira | 11 |
-| Diego Mauricio Veloza Martínez | 11 |
-| Fabio Raúl Mesa Sanabria | 27 |
-| Gabriel Darío Villa Acevedo | 13 |
-| Iván Camilo Cristancho Pérez | 5 |
-| Jhoan Manuel Ramírez Pirazán | 10 |
-| Julián Alberto Siachoque Granados | 10 |
-| Luis Miguel Ramírez | 4 |
-| Luis Silvestre Supelano Beltrán | 6 |
-| Olaf Vladimir Santanilla Saavedra | 11 |
-| **Total** | **200** |
+| Rol | Acceso | Criterio |
+|-----|--------|----------|
+| **Administrador** | CRUD completo, Gantt, Semanal, Resumen, Carga masiva, Reportes admin | `Perfil.rol = 'admin'` o superusuario |
+| **Colaborador** | Mi Cronograma: ver/actualizar sus actividades, subir evidencias, reportes semanales | `Perfil.rol = 'colaborador'` |
 
 ---
 
-## 4. Modelo de datos
+## 3. Vistas del Modulo
 
-Cada actividad (`CronogramaActividad`) almacena:
+### 3.1 Cronograma Gantt (`/actividades/`)
 
-| Campo | Tipo | Descripción |
-|---|---|---|
-| `colaborador` | texto | Nombre completo del contratista |
-| `obligacion` | texto | Obligación contractual padre |
-| `actividad_id` | texto | Código de la actividad (ej. `1.1`, `2.3`) |
-| `descripcion` | texto largo | Descripción detallada del compromiso |
-| `fecha_inicio` | fecha | Inicio de la actividad |
-| `fecha_fin` | fecha | Cierre de la actividad |
-| `progreso` | entero 0–100 | Porcentaje de avance |
-| `estado` | selección | `pendiente` / `en_curso` / `completada` / `bloqueada` |
-| `semanas_activas` | lista JSON | Etiquetas de semanas con ✅ (ej. `["MAR S4", "ABR S1"]`) |
-| `orden` | entero | Orden de aparición dentro del cronograma |
+Vista principal con diagrama de Gantt interactivo (enero-diciembre 2026).
 
-El campo `semanas_activas` es la clave del sistema: permite consultar en O(n) qué actividades corresponden a una semana específica sin necesidad de calcular rangos de fechas en cada consulta.
+**Filtros:** Procedimiento, Colaborador (busqueda por nombre con autocompletado), Proyecto, Estado, Obligacion.
+
+**Comportamiento:**
+- Agrupacion: Colaborador > Obligacion (sub-grupo con contador) > Actividades
+- Barras coloreadas por proyecto (6 colores fijos + leyenda)
+- Linea roja "Hoy" en la posicion actual del timeline
+- Tabla detalle expandida debajo del Gantt
+- Modal edicion (admin): crear, editar, eliminar actividad + gestion de evidencias
+
+**Reglas:**
+- No se puede marcar "Completada" sin al menos 1 evidencia adjunta
+- Si la fecha fin paso y no esta completada, se muestra como "Vencida" (estado visual automatico)
+- El filtro Procedimiento restringe el autocompletado de colaboradores
+
+### 3.2 Vista Semanal (`/actividades/semana/`)
+
+Compromisos de una semana especifica agrupados por colaborador en tarjetas.
+
+**Filtros:** Procedimiento, Colaborador, Semana (navegacion con flechas).
+
+**Comportamiento:**
+- Tarjeta por colaborador con sus actividades de la semana
+- Indicador semana N de M por actividad
+- Stats: colaboradores activos, compromisos, completados, pendientes
+- Modal de actualizacion rapida (admin)
+
+### 3.3 Resumen General (`/actividades/resumen/`)
+
+Dashboard ejecutivo para presentaciones a la Subdireccion.
+
+**Filtros:** Procedimiento, Semana.
+
+**Componentes:**
+- 6 tarjetas KPI: Total, Avance %, Completadas, En curso, Pendientes, Bloqueadas
+- Barra de distribucion por estado (verde/cyan/amarillo/rojo)
+- Tabla de colaboradores con:
+  - Barra de avance con porcentaje
+  - Conteo por estado
+  - Semaforo: "Al dia" (>=70%), "En riesgo" (40-70%), "Critico" (<40%)
+
+### 3.4 Mi Cronograma (`/mi-cronograma/`)
+
+Autoservicio para colaboradores.
+
+**Funcionalidades:**
+- Ve unicamente sus actividades propias
+- Actualiza progreso (0-100%) y estado
+- Sube evidencias (max 10MB)
+- Redacta reportes semanales (que hizo + impedimentos)
+
+**Restriccion:** Requiere `Perfil` con `colaborador` vinculado.
 
 ---
 
-## 5. Fuente de datos — Cronogramas Markdown
+## 4. Calendario de Semanas
 
-Los cronogramas se cargan desde archivos `.md` ubicados en `data/Cronogramas_actividades/`. El sistema soporta cuatro formatos de tabla distintos:
+48 semanas laborales (lunes a viernes), 4 por mes:
 
-| Formato | Descripción | Ejemplo de colaborador |
-|---|---|---|
-| `secciones` | Secciones `###` con tablas por obligación | Daniel Avendaño, David Ladino |
-| `wbs` | Tabla WBS con fechas explícitas de inicio/fin | Fabio Mesa, Diego Veloza |
-| `tabla_plana_dos_cols` | Columna Obligación + Actividad + semanas | Luis Silvestre |
-| `tabla_sin_secciones` | `#` \| Obligación \| semanas o fechas | Todos los demás |
+| Mes | Semanas | Ejemplo |
+|-----|---------|---------|
+| Enero | ENE S1 – S4 | 05-ene a 30-ene |
+| Febrero | FEB S1 – S4 | 02-feb a 27-feb |
+| ... | ... | ... |
+| Diciembre | DIC S1 – S4 | 30-nov a 25-dic |
 
-### Formato especial de columnas de fecha
-
-Cristhiam Daniel Campos Julca usa un formato con fechas absolutas en las columnas (`Mar 23`, `Abr 06`, `Jun 01`) en lugar de etiquetas estándar (`MAR S4`, `ABR S1`). El parser resuelve esto mediante:
-
-1. Detecta columnas con patrón `Mes DD` (ej. `Mar 23`)
-2. Convierte a fecha ISO: `2026-03-23`
-3. Busca en el mapa inverso `FECHA_A_SEMANA` → `MAR S4`
-4. Ignora fechas que no corresponden a semana hábil (festivos: `Mar 30`, `Jun 29`, `Ago 31`, `Dic 28`)
-
-Las filas en negrita (`**1**`) se interpretan como encabezados de obligación, no como actividades independientes.
+Cada actividad almacena en `semanas_activas` la lista exacta de semanas donde tiene compromisos.
 
 ---
 
-## 6. Comando de importación
+## 5. Flujos de Trabajo
 
-```bash
-# Importar / reimportar todos los cronogramas
-python manage.py importar_cronogramas --limpiar
+### 5.1 Importacion de Cronogramas
+
+```
+Archivo .md  -->  importar_cronogramas --limpiar  -->  Obligaciones + Actividades
+                                                  -->  calcular_progreso (estados)
 ```
 
-- `--limpiar`: elimina todas las actividades existentes antes de importar (recomendado para reimportaciones completas).
-- Sin `--limpiar`: agrega sin eliminar (útil si se agrega un colaborador nuevo sin afectar el resto).
+Soporta 4 formatos de Markdown: secciones con `###`, tabla WBS con fechas, tabla plana con 2 columnas, tabla sin secciones.
 
-El comando recorre todos los archivos `.md` en `data/Cronogramas_actividades/`, detecta el formato automáticamente, parsea las actividades y las guarda en base de datos.
+### 5.2 Seguimiento Semanal (Admin)
 
----
+```
+Resumen General  -->  Filtrar procedimiento  -->  Identificar criticos/vencidos
+Vista Semanal    -->  Revisar por colaborador -->  Actualizar estados
+```
 
-## 7. Vistas del sistema
+### 5.3 Ciclo del Colaborador
 
-### 7.1 Diagrama de Gantt (`/actividades/`)
+```
+Login  -->  Mi Cronograma  -->  Ver actividades semana
+                           -->  Actualizar progreso
+                           -->  Subir evidencia  -->  Marcar completada
+                           -->  Escribir reporte semanal
+```
 
-Vista principal del módulo. Muestra todas las actividades del año en una tabla tipo Gantt con:
-- Filas por colaborador y actividad
-- Columnas por semana (48 semanas)
-- Celdas coloreadas según estado (`pendiente`, `en_curso`, `completada`, `bloqueada`)
-- Filtro por colaborador
-- Modal inline para actualizar estado y progreso de cada actividad
+### 5.4 Regla de Completado
 
-### 7.2 Vista Semanal (`/actividades/semana/`)
-
-Vista de tarjetas por colaborador para una semana específica. Muestra:
-- Tarjeta por colaborador con sus compromisos de la semana
-- Barra de progreso total por colaborador
-- Check rápido para marcar actividades como completadas
-- Modal para actualizar estado y progreso detallado
-- Navegación entre semanas (anterior / siguiente / semana actual)
-- Filtro por colaborador individual
-
-### 7.3 Resumen General (`/actividades/resumen/`)
-
-Vista ejecutiva para el Subdirector. Muestra el contador total de compromisos activos para la semana seleccionada, con navegación entre semanas. El dato se renderiza desde el servidor en la carga inicial (sin dependencia de JavaScript para mostrar el número).
+```
+Actividad sin evidencia  -->  Intenta marcar "Completada"  -->  RECHAZADO
+Actividad con evidencia  -->  Marca "Completada"           -->  OK
+```
 
 ---
 
-## 8. API interna
+## 6. Gestion de Evidencias
 
-| Endpoint | Método | Descripción |
-|---|---|---|
-| `GET /api/actividades/` | GET | Lista de actividades con filtros (colaborador, semana) para el Gantt |
-| `GET /api/actividades/semana/` | GET | Actividades agrupadas por colaborador para una semana |
-| `PUT /api/actividades/<id>/` | PUT | Actualiza estado y/o progreso de una actividad |
-| `GET /api/actividades/resumen/` | GET | Total de compromisos para una semana |
-
-Todos los endpoints requieren sesión activa (`@login_required`).
-
----
-
-## 9. Semanas del sistema
-
-El sistema define 48 semanas hábiles para 2026 (enero a diciembre), excluyendo semanas de festivos extendidos:
-- Semana Santa (30 Mar – 3 Abr): no existe `MAR S5`
-- Festivos de mitad de año: `Jun 29`, `Ago 31` no corresponden a semana hábil
-- Las semanas se identifican con etiquetas `MES S#` (ej. `MAR S4`, `ABR S1`)
-
-La semana activa se determina comparando la fecha del servidor contra los rangos definidos en `SEMANA_FECHAS`.
+| Aspecto | Valor |
+|---------|-------|
+| Tamano maximo | 10 MB |
+| Formatos | PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, ZIP, RAR, TXT, CSV, PPTX |
+| Almacenamiento | `/media/evidencias/YYYY/MM/` |
+| Subir | Dueno de la actividad o admin |
+| Eliminar | Quien subio o admin |
 
 ---
 
-## 10. Infraestructura de despliegue
+## 7. Estados de Actividad
 
-| Componente | Detalle |
-|---|---|
-| Framework | Django 5.x + Gunicorn (puerto 8085) |
-| Archivos estáticos | Whitenoise (`CompressedManifestStaticFilesStorage`) |
-| Base de datos | SQLite (`db.sqlite3`) |
-| Acceso externo | Túnel ngrok → Gunicorn (bypasa nginx) |
-| Despliegue de cambios | `python manage.py collectstatic --noinput` + `sudo systemctl restart dashboard-srni.service` |
+| Estado | Color | Transicion |
+|--------|-------|------------|
+| Pendiente | Gris | Estado inicial |
+| En Curso | Cyan | Al iniciar trabajo |
+| Completada | Verde | Requiere evidencia |
+| Bloqueada | Rojo | Impedimento externo |
+| Vencida (visual) | — | Automatico si fecha_fin < hoy y no completada |
 
 ---
 
-## 11. Flujo de trabajo recomendado
+## 8. Colores por Proyecto
 
-1. **Cargar o actualizar cronograma**: editar el `.md` del colaborador en `data/Cronogramas_actividades/` y ejecutar `python manage.py importar_cronogramas --limpiar`.
-2. **Seguimiento semanal**: ingresar a `/actividades/semana/`, seleccionar la semana actual y actualizar estado/progreso de cada actividad mediante el modal.
-3. **Revisión ejecutiva**: ingresar a `/actividades/resumen/` para ver el total de compromisos activos en la semana.
-4. **Vista completa de año**: ingresar a `/actividades/` para revisar el Gantt completo de todos los colaboradores.
+| Proyecto | Color |
+|----------|-------|
+| VIVANTO | Azul oscuro (#003087) |
+| Caracterizacion | Verde (#00875a) |
+| Modelo Integrado | Rojo (#CE1126) |
+| Nuevo Ruv | Morado (#7c3aed) |
+| Ruv Temporal-Sirav-Sipod | Cyan (#0891b2) |
+| Transformacion Ficha Estrategica | Naranja (#d97706) |

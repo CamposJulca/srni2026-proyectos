@@ -320,11 +320,18 @@ let persona = document.getElementById("personaFiltro").value
 let rol = document.getElementById("rolFiltro").value
 let proyecto = document.getElementById("proyectoFiltro").value
 
+const hoy = new Date()
+const periodo = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`
 
 const procedimiento = document.getElementById('procSection').dataset.procedimiento || ''
-fetch(`/api/dashboard/?persona=${persona}&rol=${rol}&proyecto=${proyecto}&procedimiento=${encodeURIComponent(procedimiento)}`)
+fetch(`/api/dashboard/?persona=${persona}&rol=${rol}&proyecto=${proyecto}&procedimiento=${encodeURIComponent(procedimiento)}&periodo=${periodo}`)
 .then(response => response.json())
 .then(data => {
+
+if(data.error){
+console.error(data.error)
+return
+}
 
 actualizarKPIs(data.kpis)
 
@@ -333,8 +340,10 @@ graficoRoles(data.roles_persona)
 graficoModulos(data.modulos_proyecto)
 graficoMes(data.compromisos_mes)
 renderOcupacion(data.proyectos_persona, data.kpis.proyectos)
+renderCruceCobro(data.cruce_cobro || [], data.periodo_cobro || periodo)
 
 })
+.catch(err => console.error("Error cargando dashboard:", err))
 
 }
 
@@ -349,6 +358,17 @@ document.getElementById("kpiAsignaciones").innerText = kpis.asignaciones
 }
 
 
+function nombrePersonaRegistro(item){
+return item.colaborador__nombre || item.persona__nombre || "Sin nombre"
+}
+
+
+function formatoMoneda(valor){
+const n = parseFloat(valor || 0)
+return `$ ${n.toLocaleString("es-CO", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+}
+
+
 /* =========================
 GRAFICO PERSONAS
 ========================= */
@@ -356,12 +376,12 @@ GRAFICO PERSONAS
 function graficoPersonas(datos){
 
 datos.sort((a,b)=>
-a.persona__nombre.localeCompare(b.persona__nombre)
+nombrePersonaRegistro(a).localeCompare(nombrePersonaRegistro(b))
 )
 
 let visibles = datos.slice(0,10)
 
-let labels = visibles.map(x => x.persona__nombre)
+let labels = visibles.map(x => nombrePersonaRegistro(x))
 let valores = visibles.map(x => x.total)
 
 let canvas = document.getElementById("graficoPersonas")
@@ -566,8 +586,9 @@ let html = '<div class="ocupacion-lista">'
 datos.forEach(p => {
 const pct = Math.min(100, Math.round(p.total / totalProyectos * 100))
 const clase = pct >= 67 ? 'bar-alto' : pct >= 34 ? 'bar-medio' : 'bar-bajo'
+const nombre = nombrePersonaRegistro(p)
 html += `<div class="ocupacion-fila">
-  <div class="ocupacion-nombre" title="${p.persona__nombre}">${p.persona__nombre}</div>
+  <div class="ocupacion-nombre" title="${nombre}">${nombre}</div>
   <div class="ocupacion-barra-wrap">
     <div class="ocupacion-barra ${clase}" style="width:${pct}%"></div>
   </div>
@@ -579,6 +600,61 @@ html += `<div class="ocupacion-fila">
 html += '</div>'
 lista.innerHTML = html
 
+}
+
+
+/* =========================
+CRUCE COBRO VS CUMPLIMIENTO
+========================= */
+
+function renderCruceCobro(rows, periodo){
+
+const contenedor = document.getElementById("cruceCobroTabla")
+const badgePeriodo = document.getElementById("crucePeriodo")
+badgePeriodo.textContent = periodo ? `Periodo ${periodo}` : ""
+
+if(!rows.length){
+contenedor.innerHTML = '<p style="color:var(--texto-s);padding:8px 0;font-size:0.9rem;">No hay cuentas de cobro para este período.</p>'
+return
+}
+
+const estadoMap = {
+alineado: "Alineado",
+alerta: "Alerta",
+desalineado: "Desalineado",
+rechazada: "Rechazada",
+sin_cuenta: "Sin cuenta",
+}
+
+let html = `<table class="cruce-cobro-tabla">
+<thead>
+<tr>
+  <th>Contratista</th>
+  <th>Avance</th>
+  <th>Cumplimiento</th>
+  <th>Cobro</th>
+  <th>Brecha</th>
+  <th>Estado</th>
+</tr>
+</thead>
+<tbody>`
+
+rows.forEach(r => {
+const brecha = Number(r.brecha_cumplimiento_cobro || 0)
+const claseBrecha = brecha >= 0 ? "cruce-brecha-ok" : "cruce-brecha-alerta"
+const claseEstado = `cruce-estado-${r.estado_cruce || "sin_cuenta"}`
+html += `<tr>
+  <td>${r.colaborador}</td>
+  <td>${r.avance_pct}%</td>
+  <td>${r.cumplimiento_pct}%</td>
+  <td>${formatoMoneda(r.valor_cobrado)} <span class="cruce-subdato">(${r.cobro_pct}%)</span></td>
+  <td><span class="${claseBrecha}">${brecha}%</span></td>
+  <td><span class="cruce-estado ${claseEstado}">${estadoMap[r.estado_cruce] || r.estado_cruce}</span></td>
+</tr>`
+})
+
+html += "</tbody></table>"
+contenedor.innerHTML = html
 }
 
 

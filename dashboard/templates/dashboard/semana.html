@@ -6,6 +6,7 @@
 {% block head_extra %}
 <link rel="stylesheet" href="{% static 'dashboard/css/actividades.css' %}">
 <link rel="stylesheet" href="{% static 'dashboard/css/semana.css' %}">
+<link rel="stylesheet" href="{% static 'dashboard/css/mi_cronograma.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -20,6 +21,12 @@
       </div>
       <div class="act-toolbar-right">
         <div class="act-filtros">
+          <select id="filtro-procedimiento-sem" class="act-select">
+            <option value="">— Procedimiento —</option>
+            {% for p in procedimientos %}
+            <option value="{{ p }}">{{ p }}</option>
+            {% endfor %}
+          </select>
           <select id="filtro-colaborador-sem" class="act-select">
             <option value="">Todos los colaboradores</option>
             {% for c in colaboradores %}
@@ -107,7 +114,8 @@
   </div>
 </main>
 
-<!-- MODAL EDITAR ESTADO/PROGRESO -->
+<!-- MODAL EDITAR ESTADO/PROGRESO (solo admin) -->
+{% if es_admin %}
 <div class="act-modal-overlay" id="act-modal-overlay">
   <div class="act-modal" id="act-modal">
     <div class="act-modal-header">
@@ -143,6 +151,25 @@
           <input type="range" id="modal-progreso" min="0" max="100" value="0">
         </div>
       </div>
+      <!-- EVIDENCIAS -->
+      <div class="act-form-group">
+        <label>Evidencias adjuntas</label>
+        <div class="mic-evidencias-list" id="sem-evidencias-list">
+          <p class="mic-evidencias-vacio">Sin evidencias</p>
+        </div>
+        <div class="mic-upload-area">
+          <input type="file" id="sem-upload-input" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip,.rar,.txt,.csv,.pptx">
+          <button type="button" class="act-btn-secundario" id="sem-btn-upload" style="font-size:0.78rem;height:32px;padding:0 12px;display:flex;align-items:center;gap:5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Subir archivo
+          </button>
+          <input type="text" id="sem-upload-comentario" placeholder="Comentario (opcional)" class="mic-upload-comment">
+        </div>
+      </div>
+      <div class="mic-modal-warning" id="sem-modal-warning" style="display:none"></div>
       <div class="act-modal-footer">
         <div style="margin-left:auto;display:flex;gap:8px">
           <button type="button" class="act-btn-secundario" id="btn-modal-cancelar">Cancelar</button>
@@ -152,13 +179,17 @@
     </form>
   </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
+{{ semanas|json_script:"js-semanas" }}
+{{ semana_fechas|json_script:"js-semana-fechas" }}
 <script>
-const SEMANAS_ORDENADAS = {{ semanas|safe }};
+const ES_ADMIN = {{ es_admin|yesno:"true,false" }};
+const SEMANAS_ORDENADAS = JSON.parse(document.getElementById('js-semanas').textContent);
 const SEMANA_ACTUAL_DEFAULT = "{{ semana_actual }}";
-const SEMANA_FECHAS = {{ semana_fechas }};
+const SEMANA_FECHAS = JSON.parse(document.getElementById('js-semana-fechas').textContent);
 </script>
 <script src="{% static 'dashboard/js/semana.js' %}"></script>
 {% endblock %}

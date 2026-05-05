@@ -40,4 +40,19 @@ urlpatterns = [
     path("actividades/resumen/",      views.resumen_view,        name="resumen"),
     path("api/actividades/resumen/",  views.resumen_data,        name="resumen_data"),
 
+    # Mi Cronograma (self-service colaborador)
+    path("mi-cronograma/",              views.mi_cronograma_view,   name="mi_cronograma"),
+    path("api/mi-cronograma/",          views.mi_cronograma_data,   name="mi_cronograma_data"),
+    path("api/mi-cronograma/<int:pk>/", views.mi_actividad_update,  name="mi_actividad_update"),
+
+    # Evidencias (upload de archivos)
+    path("api/evidencias/<int:actividad_pk>/",        views.evidencias_lista,     name="evidencias_lista"),
+    path("api/evidencias/<int:actividad_pk>/subir/",  views.evidencia_subir,      name="evidencia_subir"),
+    path("api/evidencias/eliminar/<int:pk>/",         views.evidencia_eliminar,   name="evidencia_eliminar"),
+
+    # Reportes semanales
+    path("api/reporte-semanal/",        views.reporte_semanal_data,     name="reporte_semanal_data"),
+    path("api/reporte-semanal/guardar/", views.reporte_semanal_guardar, name="reporte_semanal_guardar"),
+    path("api/reportes-admin/",         views.reportes_admin,           name="reportes_admin"),
+
 ]

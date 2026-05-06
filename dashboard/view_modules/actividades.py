@@ -1,0 +1,15 @@
+from dashboard.domains.actividades.views import (
+    _calcular_resumen,
+    _semana_actual,
+    actividad_crear,
+    actividad_detalle,
+    actividades_data,
+    actividades_view,
+    mi_actividad_update,
+    mi_cronograma_data,
+    mi_cronograma_view,
+    resumen_data,
+    resumen_view,
+    semana_data,
+    semana_view,
+)

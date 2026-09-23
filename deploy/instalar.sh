@@ -35,7 +35,7 @@ echo "==> Entorno virtual y dependencias"
 echo "==> Variables de entorno"
 if [ ! -f "$ENVF" ]; then
   KEY=$("$VENV/bin/python" -c 'import secrets; print(secrets.token_urlsafe(50))')
-  sed "s|__GENERADA_POR_INSTALAR_SH__|$KEY|" "$APP/deploy/srni-dashboard.env.example" > "$ENVF"
+  sed -e "s|__GENERADA_POR_INSTALAR_SH__|$KEY|" -e "s|__HOME__|$HOME|g" "$APP/deploy/srni-dashboard.env.example" > "$ENVF"
   echo "    creado $ENVF"
 fi
 chmod 600 "$ENVF"

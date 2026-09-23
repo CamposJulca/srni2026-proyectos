@@ -5,4 +5,6 @@ from dashboard.domains.gerencial.views import (
     dashboard_data,
     gerencial_data,
     personas_por_rol,
+    proyecto_detalle_data,
+    proyecto_exportar_csv,
 )

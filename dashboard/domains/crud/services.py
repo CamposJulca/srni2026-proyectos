@@ -1,10 +1,20 @@
 import re
 
+from django.core.exceptions import ValidationError
 from django.db import connection
 
 
 class CrudValidationError(Exception):
     pass
+
+
+def _mensaje_validacion(exc):
+    if hasattr(exc, "message_dict"):
+        return " ".join(
+            f"{campo}: {', '.join(mensajes)}"
+            for campo, mensajes in exc.message_dict.items()
+        )
+    return str(exc)
 
 
 def ejecutar_select_seguro(query):
@@ -37,7 +47,10 @@ def actualizar_objeto(obj, campos, body):
         nombre = campo["name"]
         if nombre in body:
             setattr(obj, nombre, body[nombre] or None)
-    obj.save()
+    try:
+        obj.save()
+    except ValidationError as exc:
+        raise CrudValidationError(_mensaje_validacion(exc)) from exc
     return obj
 
 
@@ -46,4 +59,9 @@ def crear_objeto(cfg, body):
     for campo in cfg["campos"]:
         nombre = campo["name"]
         kwargs[nombre] = body.get(nombre) or None
-    return cfg["modelo"].objects.create(**kwargs)
+    obj = cfg["modelo"](**kwargs)
+    try:
+        obj.save()
+    except ValidationError as exc:
+        raise CrudValidationError(_mensaje_validacion(exc)) from exc
+    return obj

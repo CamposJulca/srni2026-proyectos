@@ -1,0 +1,94 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Proyecto {{ proyecto.nombre }}{% endblock %}
+
+{% block content %}
+<main class="main proyecto-detalle" data-proyecto-id="{{ proyecto.id }}">
+  <section class="ger-header-section">
+    <div class="ger-header">
+      <div class="ger-header-icono">▣</div>
+      <div>
+        <h2 class="ger-titulo" id="proyectoNombre">{{ proyecto.nombre }}</h2>
+        <p class="ger-subtitulo" id="proyectoObjetivo"></p>
+      </div>
+      <div class="proyecto-acciones">
+        <a class="btn-crud-nuevo" href="/api/proyectos/{{ proyecto.id }}/exportar.csv">Exportar Excel</a>
+        <button class="btn-crud-nuevo" type="button" onclick="window.print()">Exportar PDF</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="proyecto-resumen-grid">
+    <article class="proyecto-panel">
+      <h3>Resumen Ejecutivo</h3>
+      <div id="proyectoFicha" class="proyecto-ficha"></div>
+    </article>
+    <article class="proyecto-panel">
+      <h3>Semáforo</h3>
+      <div id="proyectoSemaforo" class="proyecto-semaforo"></div>
+    </article>
+  </section>
+
+  <section class="proyecto-resumen-grid">
+    <article class="proyecto-panel">
+      <h3>Módulos</h3>
+      <div id="proyectoModulos"></div>
+    </article>
+    <article class="proyecto-panel">
+      <h3>Equipo Asignado</h3>
+      <div id="proyectoEquipo"></div>
+    </article>
+  </section>
+
+  <section class="proyecto-panel">
+    <h3>Cronograma</h3>
+    <div class="crud-tabla-wrap">
+      <table class="crud-tabla">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Actividad</th>
+            <th>Responsable</th>
+            <th>Fechas</th>
+            <th>Estado</th>
+            <th>Avance</th>
+          </tr>
+        </thead>
+        <tbody id="proyectoCronograma"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="proyecto-resumen-grid">
+    <article class="proyecto-panel">
+      <h3>Riesgos</h3>
+      <div id="proyectoRiesgos"></div>
+    </article>
+    <article class="proyecto-panel">
+      <h3>Alertas</h3>
+      <div id="proyectoAlertas"></div>
+    </article>
+  </section>
+
+  <section class="proyecto-resumen-grid">
+    <article class="proyecto-panel">
+      <h3>Cuentas de Cobro</h3>
+      <div id="proyectoCuentas"></div>
+    </article>
+    <article class="proyecto-panel">
+      <h3>Evidencias</h3>
+      <div id="proyectoEvidencias"></div>
+    </article>
+  </section>
+
+  <section class="proyecto-panel">
+    <h3>Historial</h3>
+    <div id="proyectoHistorial"></div>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'dashboard/js/proyecto_detalle.js' %}"></script>
+{% endblock %}

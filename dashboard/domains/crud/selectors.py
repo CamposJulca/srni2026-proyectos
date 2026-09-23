@@ -37,9 +37,13 @@ def aplicar_select_related(tabla, qs):
     if tabla == "obligacion":
         return qs.select_related("colaborador")
     if tabla == "actividad":
-        return qs.select_related("obligacion", "obligacion__colaborador")
+        return qs.select_related("obligacion", "obligacion__colaborador", "proyecto")
     if tabla == "cuenta_cobro":
         return qs.select_related("colaborador")
+    if tabla == "proyecto":
+        return qs.select_related("responsable", "procedimiento")
+    if tabla in ("riesgo_proyecto", "alerta_proyecto"):
+        return qs.select_related("proyecto", "responsable")
     return qs
 
 

@@ -1,3 +1,5 @@
+from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from .organizacion import Colaborador, Proyecto
@@ -39,7 +41,7 @@ class Actividad(models.Model):
     descripcion = models.TextField()
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
-    progreso = models.IntegerField(default=0)
+    progreso = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default="pendiente")
     orden = models.IntegerField(default=0)
     semanas_activas = models.JSONField(default=list, blank=True)
@@ -49,6 +51,18 @@ class Actividad(models.Model):
         ordering = ["obligacion__colaborador", "orden", "fecha_inicio"]
         verbose_name = "Actividad"
         verbose_name_plural = "Actividades"
+
+    def clean(self):
+        if self.fecha_inicio and self.fecha_fin and self.fecha_fin < self.fecha_inicio:
+            raise ValidationError({"fecha_fin": "La fecha fin debe ser mayor o igual a la fecha inicio."})
+
+    def save(self, *args, **kwargs):
+        if self.estado == "completada":
+            self.progreso = 100
+        elif self.progreso == 100:
+            self.estado = "completada"
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.obligacion.colaborador} — {self.actividad_id} {self.descripcion[:50]}"

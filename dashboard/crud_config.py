@@ -1,5 +1,6 @@
 from .models import (
     Actividad,
+    AlertaProyecto,
     Asignacion,
     Colaborador,
     CuentaCobro,
@@ -7,11 +8,53 @@ from .models import (
     Obligacion,
     Procedimiento,
     Proyecto,
+    RiesgoProyecto,
     Rol,
 )
 
 
 TABLA_META = {
+    "proyecto": {
+        "modelo": Proyecto,
+        "label": "Proyectos",
+        "buscar_en": ["nombre", "objetivo", "responsable__nombre", "procedimiento__nombre"],
+        "filtro_colaborador": False,
+        "campos": [
+            {"name": "nombre", "label": "Nombre", "type": "text", "required": True},
+            {"name": "objetivo", "label": "Objetivo", "type": "textarea"},
+            {
+                "name": "estado",
+                "label": "Estado",
+                "type": "choice",
+                "opciones_fijas": [
+                    {"id": "planeado", "label": "Planeado"},
+                    {"id": "activo", "label": "Activo"},
+                    {"id": "en_riesgo", "label": "En riesgo"},
+                    {"id": "bloqueado", "label": "Bloqueado"},
+                    {"id": "finalizado", "label": "Finalizado"},
+                    {"id": "cancelado", "label": "Cancelado"},
+                ],
+            },
+            {
+                "name": "prioridad",
+                "label": "Prioridad",
+                "type": "choice",
+                "opciones_fijas": [
+                    {"id": "baja", "label": "Baja"},
+                    {"id": "media", "label": "Media"},
+                    {"id": "alta", "label": "Alta"},
+                    {"id": "critica", "label": "Crítica"},
+                ],
+            },
+            {"name": "fecha_inicio", "label": "Fecha inicio", "type": "date"},
+            {"name": "fecha_fin", "label": "Fecha fin", "type": "date"},
+            {"name": "responsable_id", "label": "Responsable", "type": "fk", "fk_modelo": "Colaborador"},
+            {"name": "procedimiento_id", "label": "Procedimiento", "type": "fk", "fk_modelo": "Procedimiento"},
+            {"name": "presupuesto", "label": "Presupuesto / valor estimado", "type": "number"},
+            {"name": "observaciones", "label": "Observaciones", "type": "textarea"},
+        ],
+        "columnas_lista": ["nombre", "estado", "prioridad", "responsable__nombre", "fecha_inicio", "fecha_fin", "presupuesto"],
+    },
     "colaborador": {
         "modelo": Colaborador,
         "label": "Colaboradores",
@@ -46,6 +89,7 @@ TABLA_META = {
         "filtro_colaborador": True,
         "campos": [
             {"name": "obligacion_id", "label": "Obligación", "type": "fk", "required": True, "fk_modelo": "Obligacion"},
+            {"name": "proyecto_id", "label": "Proyecto", "type": "fk", "fk_modelo": "Proyecto"},
             {"name": "actividad_id", "label": "ID actividad", "type": "text"},
             {"name": "descripcion", "label": "Descripción", "type": "textarea", "required": True},
             {"name": "fecha_inicio", "label": "Fecha inicio", "type": "date"},
@@ -59,11 +103,12 @@ TABLA_META = {
                     {"id": "pendiente", "label": "Pendiente"},
                     {"id": "en_curso", "label": "En curso"},
                     {"id": "completada", "label": "Completada"},
+                    {"id": "bloqueada", "label": "Bloqueada"},
                 ],
             },
             {"name": "orden", "label": "Orden", "type": "number"},
         ],
-        "columnas_lista": ["obligacion__colaborador__nombre", "actividad_id", "descripcion", "estado", "progreso"],
+        "columnas_lista": ["obligacion__colaborador__nombre", "proyecto__nombre", "actividad_id", "descripcion", "estado", "progreso"],
     },
     "cuenta_cobro": {
         "modelo": CuentaCobro,
@@ -126,6 +171,87 @@ TABLA_META = {
         ],
         "columnas_lista": ["nombre"],
     },
+    "riesgo_proyecto": {
+        "modelo": RiesgoProyecto,
+        "label": "Riesgos de proyecto",
+        "buscar_en": ["riesgo", "proyecto__nombre", "responsable__nombre"],
+        "filtro_colaborador": False,
+        "campos": [
+            {"name": "proyecto_id", "label": "Proyecto", "type": "fk", "required": True, "fk_modelo": "Proyecto"},
+            {"name": "riesgo", "label": "Riesgo", "type": "textarea", "required": True},
+            {
+                "name": "impacto",
+                "label": "Impacto",
+                "type": "choice",
+                "opciones_fijas": [
+                    {"id": "bajo", "label": "Bajo"},
+                    {"id": "medio", "label": "Medio"},
+                    {"id": "alto", "label": "Alto"},
+                    {"id": "critico", "label": "Crítico"},
+                ],
+            },
+            {
+                "name": "probabilidad",
+                "label": "Probabilidad",
+                "type": "choice",
+                "opciones_fijas": [
+                    {"id": "bajo", "label": "Bajo"},
+                    {"id": "medio", "label": "Medio"},
+                    {"id": "alto", "label": "Alto"},
+                    {"id": "critico", "label": "Crítico"},
+                ],
+            },
+            {"name": "responsable_id", "label": "Responsable", "type": "fk", "fk_modelo": "Colaborador"},
+            {"name": "fecha_limite", "label": "Fecha límite", "type": "date"},
+            {
+                "name": "estado",
+                "label": "Estado",
+                "type": "choice",
+                "opciones_fijas": [
+                    {"id": "abierto", "label": "Abierto"},
+                    {"id": "en_mitigacion", "label": "En mitigación"},
+                    {"id": "cerrado", "label": "Cerrado"},
+                ],
+            },
+            {"name": "plan_mitigacion", "label": "Plan de mitigación", "type": "textarea"},
+        ],
+        "columnas_lista": ["proyecto__nombre", "riesgo", "impacto", "probabilidad", "responsable__nombre", "fecha_limite", "estado"],
+    },
+    "alerta_proyecto": {
+        "modelo": AlertaProyecto,
+        "label": "Alertas de proyecto",
+        "buscar_en": ["alerta", "proyecto__nombre", "responsable__nombre"],
+        "filtro_colaborador": False,
+        "campos": [
+            {"name": "proyecto_id", "label": "Proyecto", "type": "fk", "required": True, "fk_modelo": "Proyecto"},
+            {"name": "alerta", "label": "Alerta", "type": "textarea", "required": True},
+            {
+                "name": "severidad",
+                "label": "Severidad",
+                "type": "choice",
+                "opciones_fijas": [
+                    {"id": "informativa", "label": "Informativa"},
+                    {"id": "media", "label": "Media"},
+                    {"id": "alta", "label": "Alta"},
+                    {"id": "critica", "label": "Crítica"},
+                ],
+            },
+            {"name": "responsable_id", "label": "Responsable", "type": "fk", "fk_modelo": "Colaborador"},
+            {"name": "fecha_limite", "label": "Fecha límite", "type": "date"},
+            {
+                "name": "estado",
+                "label": "Estado",
+                "type": "choice",
+                "opciones_fijas": [
+                    {"id": "abierta", "label": "Abierta"},
+                    {"id": "atendida", "label": "Atendida"},
+                    {"id": "cerrada", "label": "Cerrada"},
+                ],
+            },
+            {"name": "plan_accion", "label": "Plan de acción", "type": "textarea"},
+        ],
+        "columnas_lista": ["proyecto__nombre", "alerta", "severidad", "responsable__nombre", "fecha_limite", "estado"],
+    },
 }
 
 
@@ -133,10 +259,11 @@ FK_MODELOS = {
     "Procedimiento": Procedimiento,
     "Colaborador": Colaborador,
     "Proyecto": Proyecto,
+    "RiesgoProyecto": RiesgoProyecto,
+    "AlertaProyecto": AlertaProyecto,
     "Modulo": Modulo,
     "Rol": Rol,
     "Obligacion": Obligacion,
     "Actividad": Actividad,
     "CuentaCobro": CuentaCobro,
 }
-

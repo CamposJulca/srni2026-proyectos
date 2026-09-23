@@ -15,6 +15,10 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Ruta del libro maestro de contratación que la abogada actualiza a diario.
+# Usada por el comando `importar_contratos` y el botón "Sincronizar".
+CONTRATOS_XLSX_PATH = BASE_DIR / "data" / "Contratos SRNI 2026.xlsx"
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/

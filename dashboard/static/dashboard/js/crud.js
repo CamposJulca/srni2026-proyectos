@@ -5,10 +5,13 @@
 const ICONOS = {
   colaborador: "👤",
   obligacion:  "📋",
+  proyecto:    "▣",
   actividad:   "⚡",
   cuenta_cobro: "💵",
   asignacion:  "🔗",
   modulo:      "📦",
+  riesgo_proyecto: "!",
+  alerta_proyecto: "●",
   rol:         "🏷",
 }
 

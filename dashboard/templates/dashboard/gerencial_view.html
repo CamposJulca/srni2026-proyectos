@@ -27,6 +27,15 @@
       </div>
     </section>
 
+    <!-- SUB-PESTAÑAS -->
+    <nav class="ger-subtabs">
+      <button class="ger-subtab activo" data-tab="ejecutivo">Ejecutivo</button>
+      <button class="ger-subtab" data-tab="contratacion">Contratación</button>
+    </nav>
+
+    <!-- ================= PANEL EJECUTIVO ================= -->
+    <div id="panelEjecutivo" class="ger-tab-panel activo">
+
     <!-- KPIs -->
     <section class="kpi-section">
       <div class="kpi-container">
@@ -144,6 +153,147 @@
 
       </div>
     </section>
+
+    <section class="proyecto-panel">
+      <h3>Semáforo gerencial por proyecto</h3>
+      <div class="crud-tabla-wrap">
+        <table class="crud-tabla">
+          <thead>
+            <tr>
+              <th>Proyecto</th>
+              <th>Estado</th>
+              <th>Prioridad</th>
+              <th>Responsable</th>
+              <th>Avance</th>
+              <th>Vencidas</th>
+              <th>Bloqueadas</th>
+              <th>Equipo</th>
+              <th>Semáforo</th>
+            </tr>
+          </thead>
+          <tbody id="gerProyectos"></tbody>
+        </table>
+      </div>
+    </section>
+
+    </div><!-- /panelEjecutivo -->
+
+    <!-- ================= PANEL CONTRATACIÓN ================= -->
+    <div id="panelContratacion" class="ger-tab-panel">
+
+      <section class="ger-contrat-toolbar">
+        <div>
+          <h3 class="ger-contrat-titulo">Gestión contractual — Contratos SRNI 2026</h3>
+          <p class="ger-contrat-sub" id="ctrPeriodo">Cargando…</p>
+        </div>
+        <div class="ger-contrat-acciones">
+          <span class="ger-sync-estado" id="ctrSyncEstado"></span>
+          <button class="btn-sincronizar" id="btnSincronizar">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Sincronizar
+          </button>
+        </div>
+      </section>
+
+      <!-- KPIs financieros -->
+      <section class="kpi-section">
+        <div class="kpi-container">
+          <div class="kpi-card" data-color="azul">
+            <div class="kpi-info"><p class="kpi-label">Contratos</p><h2 class="kpi-valor" id="ctrContratos">0</h2></div>
+            <div class="kpi-deco"></div>
+          </div>
+          <div class="kpi-card" data-color="verde">
+            <div class="kpi-info"><p class="kpi-label">Valor total contratado</p><h2 class="kpi-valor kpi-valor-money" id="ctrValorTotal">$0</h2></div>
+            <div class="kpi-deco"></div>
+          </div>
+          <div class="kpi-card" data-color="amarillo">
+            <div class="kpi-info"><p class="kpi-label">Pagado a la fecha</p><h2 class="kpi-valor kpi-valor-money" id="ctrCancelado">$0</h2></div>
+            <div class="kpi-deco"></div>
+          </div>
+          <div class="kpi-card" data-color="rojo">
+            <div class="kpi-info"><p class="kpi-label">Saldo por ejecutar</p><h2 class="kpi-valor kpi-valor-money" id="ctrSaldo">$0</h2></div>
+            <div class="kpi-deco"></div>
+          </div>
+          <div class="kpi-card" data-color="azul">
+            <div class="kpi-info"><p class="kpi-label">Ejecución financiera</p><h2 class="kpi-valor" id="ctrEjec">0%</h2></div>
+            <div class="kpi-deco"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Gráfico por equipo -->
+      <section class="graficos-section">
+        <div class="graficos">
+          <div class="grafico-card grafico-card-wide">
+            <div class="grafico-header">
+              <div class="grafico-dot dot-azul"></div>
+              <h3 class="grafico-titulo">Valor contratado vs. pagado por equipo</h3>
+            </div>
+            <div class="grafico-scroll"><canvas id="ctrGraficoEquipo"></canvas></div>
+          </div>
+          <div class="grafico-card">
+            <div class="grafico-header">
+              <div class="grafico-dot dot-verde"></div>
+              <h3 class="grafico-titulo">Estado de contratos</h3>
+            </div>
+            <div class="grafico-centrado"><canvas id="ctrGraficoEstado"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cruce físico vs financiero -->
+      <section class="proyecto-panel">
+        <h3>Cruce avance físico (actividades) vs. financiero (pagos)</h3>
+        <div class="crud-tabla-wrap">
+          <table class="crud-tabla">
+            <thead>
+              <tr>
+                <th>Contrato</th><th>Contratista</th><th>Equipo</th>
+                <th>Físico</th><th>Financiero</th><th>Brecha</th><th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="ctrCruce"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Alertas: por vencer / SS / pagos -->
+      <section class="ger-contrat-grid">
+        <div class="proyecto-panel">
+          <h3>Contratos por vencer (≤ 45 días)</h3>
+          <div class="crud-tabla-wrap">
+            <table class="crud-tabla">
+              <thead><tr><th>Contrato</th><th>Contratista</th><th>Días</th><th>Saldo</th></tr></thead>
+              <tbody id="ctrPorVencer"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="proyecto-panel">
+          <h3>Pagos pendientes del mes <span id="ctrMesPagos"></span></h3>
+          <div class="crud-tabla-wrap">
+            <table class="crud-tabla">
+              <thead><tr><th>Contrato</th><th>Contratista</th><th>Equipo</th><th>Valor</th></tr></thead>
+              <tbody id="ctrPagosPend"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="proyecto-panel">
+          <h3>Seguridad social atrasada</h3>
+          <div class="crud-tabla-wrap">
+            <table class="crud-tabla">
+              <thead><tr><th>Contrato</th><th>Contratista</th><th>Planillas</th><th>Faltantes</th></tr></thead>
+              <tbody id="ctrSSAtrasada"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /panelContratacion -->
 
   </main>
 {% endblock %}

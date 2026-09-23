@@ -83,6 +83,8 @@ def crud_detalle(request, tabla, pk):
             actualizar_objeto(obj, cfg["campos"], body)
         except json.JSONDecodeError:
             return JsonResponse({"error": "JSON inválido."}, status=400)
+        except CrudValidationError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
         except Exception as exc:
             return JsonResponse({"error": str(exc)}, status=400)
         return JsonResponse({"ok": True, "id": obj.pk})
@@ -111,6 +113,8 @@ def crud_crear(request, tabla):
         obj = crear_objeto(cfg, body)
     except json.JSONDecodeError:
         return JsonResponse({"error": "JSON inválido."}, status=400)
+    except CrudValidationError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
     except Exception as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 

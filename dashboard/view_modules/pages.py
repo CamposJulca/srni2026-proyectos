@@ -3,4 +3,5 @@ from dashboard.domains.pages.views import (
     crud_main_view,
     gerencial_view,
     home,
+    proyecto_detalle_view,
 )

@@ -13,7 +13,7 @@
         <p class="ger-subtitulo" id="proyectoObjetivo"></p>
       </div>
       <div class="proyecto-acciones">
-        <a class="btn-crud-nuevo" href="/api/proyectos/{{ proyecto.id }}/exportar.csv">Exportar Excel</a>
+        <a class="btn-crud-nuevo" href="{{ APP_BASE }}/api/proyectos/{{ proyecto.id }}/exportar.csv">Exportar Excel</a>
         <button class="btn-crud-nuevo" type="button" onclick="window.print()">Exportar PDF</button>
       </div>
     </div>

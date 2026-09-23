@@ -15,7 +15,7 @@ function badge(value, cls = "") {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const res = await fetch(`/api/proyectos/${proyectoId}/`)
+  const res = await fetch(`${window.APP_BASE || ''}/api/proyectos/${proyectoId}/`)
   const data = await res.json()
   renderProyecto(data)
 })

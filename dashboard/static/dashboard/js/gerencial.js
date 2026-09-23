@@ -199,7 +199,7 @@ function renderProyectos(proyectos) {
   if (!tbody) return
   tbody.innerHTML = proyectos.map(p => `
     <tr>
-      <td><a href="/proyectos/${p.id}/">${p.nombre}</a></td>
+      <td><a href="${window.APP_BASE || ''}/proyectos/${p.id}/">${p.nombre}</a></td>
       <td>${p.estado}</td>
       <td>${p.prioridad}</td>
       <td>${p.responsable || "Sin responsable"}</td>
@@ -221,7 +221,7 @@ const money = v => "$ " + Math.round(v || 0).toLocaleString("es-CO")
 const moneyM = v => "$ " + ((v || 0) / 1_000_000).toFixed(1) + "M"
 
 async function cargarContratacion() {
-  const res = await fetch("/api/gerencial/contratos/")
+  const res = await fetch((window.APP_BASE || '') + "/api/gerencial/contratos/")
   if (!res.ok) return
   const data = await res.json()
   contratacionCargada = true
@@ -347,7 +347,7 @@ async function sincronizarContratos() {
   estado.textContent = "Sincronizando…"
   estado.className = "ger-sync-estado sync-cargando"
   try {
-    const res = await fetch("/api/gerencial/contratos/sincronizar/", {
+    const res = await fetch((window.APP_BASE || '') + "/api/gerencial/contratos/sincronizar/", {
       method: "POST",
       headers: { "X-CSRFToken": getCookie("csrftoken") },
     })

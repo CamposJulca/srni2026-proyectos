@@ -1,0 +1,19 @@
+# Servicio de usuario (systemd --user) para el usuario rni en Analiticarni.
+# Instalar en ~/.config/systemd/user/srni-dashboard.service (lo hace instalar.sh).
+[Unit]
+Description=SRNI Dashboard (Django) - sinapsis.unidadvictimas.gov.co/srni-dashboard
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/servers/srni-dashboard/app
+EnvironmentFile=%h/servers/srni-dashboard/srni-dashboard.env
+# Solo escucha en localhost: el acceso es únicamente a través de nginx.
+ExecStart=%h/servers/srni-dashboard/venv/bin/gunicorn config.wsgi:application \
+    --workers 3 --bind 127.0.0.1:8089 --timeout 60 \
+    --access-logfile - --error-logfile -
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

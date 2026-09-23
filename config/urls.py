@@ -1,15 +1,12 @@
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.contrib.auth.decorators import login_required
+from django.urls import include, path, re_path
+from django.views.static import serve
 
 urlpatterns = [
-
     path('admin/', admin.site.urls),
-
     path('', include('dashboard.urls')),
-
+    # Evidencias: solo para usuarios autenticados. Funciona con DEBUG=False.
+    re_path(r'^media/(?P<path>.*)$', login_required(serve), {'document_root': settings.MEDIA_ROOT}),
 ]
-
-# Servir media (evidencias) — en produccion usar nginx si hay volumen alto
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

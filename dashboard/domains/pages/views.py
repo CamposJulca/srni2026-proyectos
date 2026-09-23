@@ -4,13 +4,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from dashboard.constants import PROCEDIMIENTOS
 from dashboard.models import Proyecto
 from dashboard.permisos import admin_required
+from dashboard.rutas import con_prefijo
 
 
 @login_required
 def home(request):
     perfil = getattr(request.user, "perfil", None)
     if perfil and perfil.rol == "colaborador":
-        return redirect("/mi-cronograma/")
+        return redirect(con_prefijo("/mi-cronograma/"))
     return render(request, "dashboard/home.html")
 
 

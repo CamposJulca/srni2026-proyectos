@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script>window.APP_BASE = "{{ APP_BASE|escapejs }}";</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Carga de Contratistas — SRNI</title>
@@ -21,7 +22,7 @@
         <h1 class="header-titulo">Carga de Contratistas</h1>
         <p class="header-subtitulo">Importar desde Excel — Subdirección de la Red Nacional de Información</p>
       </div>
-      <a href="/" class="header-badge" style="text-decoration:none;">&#8592; Dashboard</a>
+      <a href="{{ APP_BASE }}/" class="header-badge" style="text-decoration:none;">&#8592; Dashboard</a>
     </div>
   </header>
 
@@ -142,7 +143,7 @@
             </div>
           </div>
 
-          <a href="/" class="btn-volver">Ver Dashboard</a>
+          <a href="{{ APP_BASE }}/" class="btn-volver">Ver Dashboard</a>
         </div>
 
         <!-- ERROR -->
@@ -225,7 +226,7 @@
     form.append("archivo", archivoSeleccionado)
     form.append("csrfmiddlewaretoken", getCookie("csrftoken"))
 
-    fetch("/carga/", { method: "POST", body: form })
+    fetch("{{ APP_BASE }}/carga/", { method: "POST", body: form })
       .then(r => r.json())
       .then(data => {
         if (data.error) {

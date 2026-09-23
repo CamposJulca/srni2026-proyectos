@@ -324,7 +324,7 @@ const hoy = new Date()
 const periodo = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`
 
 const procedimiento = document.getElementById('procSection').dataset.procedimiento || ''
-fetch(`/api/dashboard/?persona=${persona}&rol=${rol}&proyecto=${proyecto}&procedimiento=${encodeURIComponent(procedimiento)}&periodo=${periodo}`)
+fetch(`${window.APP_BASE || ''}/api/dashboard/?persona=${persona}&rol=${rol}&proyecto=${proyecto}&procedimiento=${encodeURIComponent(procedimiento)}&periodo=${periodo}`)
 .then(response => response.json())
 .then(data => {
 
@@ -664,7 +664,7 @@ MODAL ROL
 
 function abrirModalRol(rol, proyecto){
 
-let url = `/api/dashboard/personas-por-rol/?rol=${encodeURIComponent(rol)}`
+let url = `${window.APP_BASE || ''}/api/dashboard/personas-por-rol/?rol=${encodeURIComponent(rol)}`
 if(proyecto) url += `&proyecto=${encodeURIComponent(proyecto)}`
 
 fetch(url)

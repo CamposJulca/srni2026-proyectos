@@ -38,6 +38,7 @@ from dashboard.domains.actividades.services import (
 from dashboard.domains.actividades.utils import semana_actual as _semana_actual
 from dashboard.models import Actividad
 from dashboard.permisos import _es_admin, admin_required
+from dashboard.rutas import con_prefijo
 
 
 @login_required
@@ -171,7 +172,7 @@ def resumen_data(request):
 def mi_cronograma_view(request):
     perfil = getattr(request.user, "perfil", None)
     if not perfil or not perfil.colaborador:
-        return redirect("/actividades/")
+        return redirect(con_prefijo("/actividades/"))
 
     return render(request, "dashboard/mi_cronograma.html", {
         "modulo_activo": "mi_cronograma",

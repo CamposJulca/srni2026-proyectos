@@ -41,7 +41,7 @@ const CSRF = () => {
    INIT
 ===================================================== */
 document.addEventListener("DOMContentLoaded", async () => {
-  META = await fetch("/api/crud/meta/").then(r => r.json())
+  META = await fetch((window.APP_BASE || '') + "/api/crud/meta/").then(r => r.json())
   renderSidebarCounts()
   rellenarFiltroColaborador()
   bindSidebar()
@@ -134,7 +134,7 @@ async function cargarLista() {
   const q     = $("crudSearch").value.trim()
   const colab = $("crudFiltroColaborador").value
 
-  let url = `/api/crud/${tablaActiva}/?page=${paginaActual}`
+  let url = `${window.APP_BASE || ''}/api/crud/${tablaActiva}/?page=${paginaActual}`
   if (q)     url += `&q=${encodeURIComponent(q)}`
   if (colab) url += `&colaborador=${encodeURIComponent(colab)}`
 
@@ -335,7 +335,7 @@ function abrirCrear() {
 
 async function abrirEditar(id) {
   idEdicion = id
-  const res   = await fetch(`/api/crud/${tablaActiva}/${id}/`)
+  const res   = await fetch(`${window.APP_BASE || ''}/api/crud/${tablaActiva}/${id}/`)
   const datos = await res.json()
 
   $("crudModalAvatar").textContent = "✏"
@@ -408,7 +408,7 @@ async function guardar() {
 
   if (!valido) { crudToast("Completa los campos obligatorios", "error"); return }
 
-  const url    = idEdicion ? `/api/crud/${tablaActiva}/${idEdicion}/` : `/api/crud/${tablaActiva}/crear/`
+  const url    = idEdicion ? `${window.APP_BASE || ''}/api/crud/${tablaActiva}/${idEdicion}/` : `${window.APP_BASE || ''}/api/crud/${tablaActiva}/crear/`
   const method = idEdicion ? "PUT" : "POST"
 
   const res  = await fetch(url, {
@@ -424,7 +424,7 @@ async function guardar() {
   paginaActual = 1
   cargarLista()
   // Refrescar meta totals
-  fetch("/api/crud/meta/").then(r => r.json()).then(m => {
+  fetch((window.APP_BASE || '') + "/api/crud/meta/").then(r => r.json()).then(m => {
     META = m
     renderSidebarCounts()
   })
@@ -444,7 +444,7 @@ function confirmarBorrar(id, desc) {
 
 async function borrarConfirmado() {
   $("crudModalBorrar").style.display = "none"
-  const res  = await fetch(`/api/crud/${tablaActiva}/${idBorrar}/`, {
+  const res  = await fetch(`${window.APP_BASE || ''}/api/crud/${tablaActiva}/${idBorrar}/`, {
     method: "DELETE",
     headers: { "X-CSRFToken": CSRF() },
   })
@@ -452,7 +452,7 @@ async function borrarConfirmado() {
   if (data.error) { crudToast(data.error, "error"); return }
   paginaActual = 1
   cargarLista()
-  fetch("/api/crud/meta/").then(r => r.json()).then(m => {
+  fetch((window.APP_BASE || '') + "/api/crud/meta/").then(r => r.json()).then(m => {
     META = m
     renderSidebarCounts()
   })

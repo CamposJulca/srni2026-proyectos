@@ -2,6 +2,7 @@ from functools import wraps
 
 from django.http import JsonResponse
 from django.shortcuts import redirect
+from dashboard.rutas import con_prefijo
 
 
 def _es_admin(user):
@@ -17,12 +18,12 @@ def admin_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect('/login/')
+            return redirect(con_prefijo('/login/'))
         if _es_admin(request.user):
             return view_func(request, *args, **kwargs)
-        if request.path.startswith('/api/'):
+        if request.path_info.startswith('/api/'):
             return JsonResponse({'error': 'No autorizado'}, status=403)
-        return redirect('/mi-cronograma/')
+        return redirect(con_prefijo('/mi-cronograma/'))
     return wrapper
 
 

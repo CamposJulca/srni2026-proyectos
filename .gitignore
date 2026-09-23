@@ -21,3 +21,6 @@ taskmanager/
 
 # Archivos subidos por usuarios
 media/
+
+# Socket de control de Gunicorn
+gunicorn.ctl

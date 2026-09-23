@@ -92,7 +92,7 @@ function cargarResumen() {
   var procEl = document.getElementById('filtro-procedimiento-res');
   if (procEl && procEl.value) params += '&procedimiento=' + encodeURIComponent(procEl.value);
 
-  fetch('/api/actividades/resumen/?' + params, { credentials: 'same-origin' })
+  fetch((window.APP_BASE || '') + '/api/actividades/resumen/?' + params, { credentials: 'same-origin' })
     .then(function(r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();

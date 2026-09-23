@@ -161,7 +161,7 @@ function renderGrupos(grupos) {
       const payload = { estado: nuevoEstado };
       if (progreso !== null) payload.progreso = progreso;
 
-      const res = await fetch(`/api/actividades/${id}/`, {
+      const res = await fetch(`${window.APP_BASE || ''}/api/actividades/${id}/`, {
         method: 'PUT',
         headers: { 'Content-Type':'application/json', 'X-CSRFToken': getCookie('csrftoken') },
         body: JSON.stringify(payload),
@@ -189,7 +189,7 @@ async function cargarSemana() {
 
   let data;
   try {
-    const res = await fetch('/api/actividades/semana/?' + params.toString());
+    const res = await fetch((window.APP_BASE || '') + '/api/actividades/semana/?' + params.toString());
     if (!res.ok) throw new Error('HTTP ' + res.status);
     data = await res.json();
   } catch (err) {
@@ -294,7 +294,7 @@ document.getElementById('act-modal-form').addEventListener('submit', async e => 
     estado:   document.getElementById('modal-estado').value,
     progreso: parseInt(document.getElementById('modal-progreso').value),
   };
-  const res = await fetch(`/api/actividades/${id}/`, {
+  const res = await fetch(`${window.APP_BASE || ''}/api/actividades/${id}/`, {
     method: 'PUT',
     headers: { 'Content-Type':'application/json', 'X-CSRFToken': getCookie('csrftoken') },
     body: JSON.stringify(payload),
@@ -322,7 +322,7 @@ async function cargarEvidenciasSem(actId) {
   lista.innerHTML = '<p class="mic-evidencias-vacio">Cargando...</p>';
 
   try {
-    const res = await fetch(`/api/evidencias/${actId}/`);
+    const res = await fetch(`${window.APP_BASE || ''}/api/evidencias/${actId}/`);
     const data = await res.json();
 
     if (data.evidencias.length === 0) {
@@ -351,7 +351,7 @@ async function cargarEvidenciasSem(actId) {
     lista.querySelectorAll('.mic-ev-del').forEach(btn => {
       btn.addEventListener('click', async () => {
         if (!confirm('Eliminar esta evidencia?')) return;
-        await fetch(`/api/evidencias/eliminar/${btn.dataset.id}/`, {
+        await fetch(`${window.APP_BASE || ''}/api/evidencias/eliminar/${btn.dataset.id}/`, {
           method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') },
         });
         cargarEvidenciasSem(actId);
@@ -387,7 +387,7 @@ if (semUploadBtn && semUploadInput) {
     semUploadBtn.textContent = 'Subiendo...';
 
     try {
-      const res = await fetch(`/api/evidencias/${currentSemActId}/subir/`, {
+      const res = await fetch(`${window.APP_BASE || ''}/api/evidencias/${currentSemActId}/subir/`, {
         method: 'POST',
         headers: { 'X-CSRFToken': getCookie('csrftoken') },
         body: formData,

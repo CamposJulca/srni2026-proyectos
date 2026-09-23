@@ -236,7 +236,7 @@ function ejecutarQuery() {
   ocultarTodo()
   ultimoResultado = null
 
-  fetch("/api/sql/", {
+  fetch((window.APP_BASE || '') + "/api/sql/", {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
     body: JSON.stringify({ query })

@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script>window.APP_BASE = "{{ APP_BASE|escapejs }}";</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}SRNI{% endblock %} — Dashboard SRNI</title>
@@ -14,7 +15,7 @@
   <header class="header">
     <div class="header-franja"></div>
     <div class="header-content">
-      <a href="/" class="header-logo-wrap" style="text-decoration:none">
+      <a href="{{ APP_BASE }}/" class="header-logo-wrap" style="text-decoration:none">
         <img src="{% static 'dashboard/img/escudo.png' %}" alt="Unidad para las Víctimas" class="header-logo">
       </a>
       <div class="header-divider"></div>
@@ -29,7 +30,7 @@
           </svg>
           {{ request.user.username }}
         </span>
-        <form method="post" action="/logout/" style="display:inline">
+        <form method="post" action="{{ APP_BASE }}/logout/" style="display:inline">
           {% csrf_token %}
           <button type="submit" class="header-logout">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -47,28 +48,28 @@
     <nav class="tabs-bar">
       <div class="tabs-inner">
         {% if es_admin %}
-        <a href="/dashboard/" class="tab-btn {% if modulo_activo == 'dashboard' %}active{% endif %}">
+        <a href="{{ APP_BASE }}/dashboard/" class="tab-btn {% if modulo_activo == 'dashboard' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
             <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
           </svg>
           Gestión Proyectos
         </a>
-        <a href="/gerencial/" class="tab-btn {% if modulo_activo == 'gerencial' %}active{% endif %}">
+        <a href="{{ APP_BASE }}/gerencial/" class="tab-btn {% if modulo_activo == 'gerencial' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
             <line x1="6" y1="20" x2="6" y2="14"/>
           </svg>
           Gerencial
         </a>
-        <a href="/consultas/" class="tab-btn {% if modulo_activo == 'consultas' %}active{% endif %}">
+        <a href="{{ APP_BASE }}/consultas/" class="tab-btn {% if modulo_activo == 'consultas' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
             <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
           </svg>
           Consultas SQL
         </a>
-        <a href="/crud/" class="tab-btn {% if modulo_activo == 'crud' %}active{% endif %}">
+        <a href="{{ APP_BASE }}/crud/" class="tab-btn {% if modulo_activo == 'crud' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -76,7 +77,7 @@
           Gestión CRUD
         </a>
         {% endif %}
-        <a href="/actividades/" class="tab-btn {% if modulo_activo == 'actividades' %}active{% endif %}">
+        <a href="{{ APP_BASE }}/actividades/" class="tab-btn {% if modulo_activo == 'actividades' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2"/>
             <line x1="16" y1="2" x2="16" y2="6"/>
@@ -88,7 +89,7 @@
           Cronograma
         </a>
         {% if not es_admin %}
-        <a href="/mi-cronograma/" class="tab-btn {% if modulo_activo == 'mi_cronograma' %}active{% endif %}">
+        <a href="{{ APP_BASE }}/mi-cronograma/" class="tab-btn {% if modulo_activo == 'mi_cronograma' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
           </svg>

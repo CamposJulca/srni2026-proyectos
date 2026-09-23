@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script>window.APP_BASE = "{{ APP_BASE|escapejs }}";</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard de Proyectos — SRNI</title>
@@ -23,7 +24,7 @@
         <p class="header-subtitulo">Subdirección de la Red Nacional de Información</p>
       </div>
       <div class="header-badge">SRNI 2025</div>
-      <a href="/carga/" class="header-badge" style="text-decoration:none; background:rgba(255,255,255,0.15); color:white;">
+      <a href="{{ APP_BASE }}/carga/" class="header-badge" style="text-decoration:none; background:rgba(255,255,255,0.15); color:white;">
         &#8593; Carga Excel
       </a>
     </div>

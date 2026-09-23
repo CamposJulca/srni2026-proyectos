@@ -10,7 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+
+def _lista(nombre, defecto):
+    valor = os.environ.get(nombre, defecto)
+    return [v.strip() for v in valor.split(',') if v.strip()]
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,16 +30,15 @@ CONTRATOS_XLSX_PATH = BASE_DIR / "data" / "Contratos SRNI 2026.xlsx"
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^njd!fb-w%7%1(%c%uto!!&+*8q4&51!h%im*w&)xy3tw8)+gd'
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-solo-desarrollo-local',  # en servidor siempre se define por entorno
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "srni-backend.ngrok.io"
-]
+ALLOWED_HOSTS = _lista('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,srni-backend.ngrok.io')
 
 
 # Application definition
@@ -72,6 +77,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'dashboard.permisos.user_role',
+                'dashboard.rutas.app_base',
             ],
         },
     },
@@ -86,7 +92,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # En servidor se ubica fuera del código (ver deploy/).
+        'NAME': os.environ.get('DJANGO_DB_PATH', BASE_DIR / 'db.sqlite3'),
     }
 }
 
@@ -125,21 +132,37 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = '/static/'
+# Prefijo de despliegue (p. ej. /srni-dashboard). Gunicorn lo recibe en SCRIPT_NAME.
+_PREFIJO = os.environ.get('SCRIPT_NAME', '').rstrip('/')
+
+STATIC_URL = f'{_PREFIJO}/static/'
+# WhiteNoise compara contra la ruta ya sin prefijo.
+WHITENOISE_STATIC_PREFIX = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = f'{_PREFIJO}/media/'
+MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT', BASE_DIR / 'media')
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://srni-backend.ngrok.io"
-]
+CSRF_TRUSTED_ORIGINS = _lista('DJANGO_CSRF_TRUSTED_ORIGINS', 'https://srni-backend.ngrok.io')
 
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/login/'
+# Nombres de URL (no rutas) para que respeten el prefijo de despliegue.
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'login'
 
 # Mantiene compatibilidad con migraciones históricas que usan AutoField.
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
+
+# --- Despliegue detrás de nginx con prefijo (Sinapsis) ---------------------
+if _PREFIJO:
+    # Cookies limitadas a la ruta de la app para no mezclarse con Sinapsis.
+    SESSION_COOKIE_PATH = _PREFIJO + '/'
+    CSRF_COOKIE_PATH = _PREFIJO + '/'
+if os.environ.get('DJANGO_BEHIND_HTTPS_PROXY') == 'True':
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+TIME_ZONE = os.environ.get('DJANGO_TIME_ZONE', TIME_ZONE)

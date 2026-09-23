@@ -44,7 +44,7 @@ async function cargarActividades() {
   if (soloSemana) params.set('semana', SEMANA_ACTUAL);
 
   try {
-    const res = await fetch('/api/mi-cronograma/?' + params.toString());
+    const res = await fetch((window.APP_BASE || '') + '/api/mi-cronograma/?' + params.toString());
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     allTasks = data.tasks;
@@ -191,7 +191,7 @@ document.getElementById('mic-modal-form').addEventListener('submit', async e => 
   };
 
   try {
-    const res = await fetch(`/api/mi-cronograma/${id}/`, {
+    const res = await fetch(`${window.APP_BASE || ''}/api/mi-cronograma/${id}/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
       body: JSON.stringify(payload),
@@ -218,7 +218,7 @@ async function cargarEvidencias(actividadId) {
   lista.innerHTML = '<p class="mic-evidencias-vacio">Cargando...</p>';
 
   try {
-    const res = await fetch(`/api/evidencias/${actividadId}/`);
+    const res = await fetch(`${window.APP_BASE || ''}/api/evidencias/${actividadId}/`);
     const data = await res.json();
 
     if (data.evidencias.length === 0) {
@@ -249,7 +249,7 @@ async function cargarEvidencias(actividadId) {
       btn.addEventListener('click', async () => {
         if (!confirm('Eliminar esta evidencia?')) return;
         const evId = btn.dataset.id;
-        const r = await fetch(`/api/evidencias/eliminar/${evId}/`, {
+        const r = await fetch(`${window.APP_BASE || ''}/api/evidencias/eliminar/${evId}/`, {
           method: 'POST',
           headers: { 'X-CSRFToken': getCookie('csrftoken') },
         });
@@ -286,7 +286,7 @@ document.getElementById('mic-upload-input').addEventListener('change', async (e)
   btn.textContent = 'Subiendo...';
 
   try {
-    const res = await fetch(`/api/evidencias/${currentActividadId}/subir/`, {
+    const res = await fetch(`${window.APP_BASE || ''}/api/evidencias/${currentActividadId}/subir/`, {
       method: 'POST',
       headers: { 'X-CSRFToken': getCookie('csrftoken') },
       body: formData,
@@ -322,7 +322,7 @@ async function cargarReporte() {
   document.getElementById('mic-reporte-semana').textContent = semana;
 
   try {
-    const res = await fetch(`/api/reporte-semanal/?semana=${encodeURIComponent(semana)}`);
+    const res = await fetch(`${window.APP_BASE || ''}/api/reporte-semanal/?semana=${encodeURIComponent(semana)}`);
     const data = await res.json();
 
     if (data.reportes && data.reportes.length > 0) {
@@ -358,7 +358,7 @@ document.getElementById('btn-guardar-reporte').addEventListener('click', async (
   btn.textContent = 'Guardando...';
 
   try {
-    const res = await fetch('/api/reporte-semanal/guardar/', {
+    const res = await fetch((window.APP_BASE || '') + '/api/reporte-semanal/guardar/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
       body: JSON.stringify(payload),

@@ -44,7 +44,7 @@ function activarTab(tab) {
 }
 
 async function cargarGerencial() {
-  const res  = await fetch("/api/gerencial/")
+  const res  = await fetch((window.APP_BASE || '') + "/api/gerencial/")
   const data = await res.json()
 
   renderKPIs(data.kpis)
